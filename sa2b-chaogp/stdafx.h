@@ -9,5 +9,5 @@
 #include "Trampoline.h"
 #include "IniFile.hpp"
 
-#include "mod.h"
+#include "utils.h"
 #include "chao.h"
