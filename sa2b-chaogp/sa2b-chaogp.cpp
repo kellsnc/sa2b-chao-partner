@@ -2,8 +2,8 @@
 
 extern "C"
 {
-	__declspec(dllexport) void Init(const char* path) {
-		
+	__declspec(dllexport) void Init(const char* path, const HelperFunctions& helperFunctions) {
+		Chao_Init();
 	}
 
 	__declspec(dllexport) void OnFrame() {

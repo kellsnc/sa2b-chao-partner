@@ -6,3 +6,8 @@
 #include <windows.h>
 
 #include "SA2ModLoader.h"
+#include "Trampoline.h"
+#include "IniFile.hpp"
+
+#include "mod.h"
+#include "chao.h"
