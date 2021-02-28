@@ -5,88 +5,61 @@ static Trampoline* LoadLevelManager_t = nullptr;
 static Trampoline* LoadLevelDestroy_t = nullptr;
 static Trampoline* ChangeChaoStage_t = nullptr;
 
-static ChaoData* CarriedChao = nullptr;
+static bool ChaoPowerups = false;
+bool ChaoAssist = true;
+bool ChaoLuck = true;
 
-enum class ChaoHandlerActions {
-	LoadChao,
-	Free,
-	Attached
-};
+ChaoLeash CarriedChao[2] = {};
 
-struct ChaoHandlerData1 {
-	ChaoHandlerActions Action;
-	EntityData1* chaodata;
-	Uint8 player;
-	NJS_VECTOR dest;
-	float dist;
-	bool attached;
-};
+void SetChaoPowerups(int id, ChaoData* chaodata) {
+	if (ChaoPowerups == true) {
+		CharObj2Base* co2 = MainCharObj2[id];
 
-NJS_VECTOR GetChaoPointToFollow(NJS_VECTOR* pos, float rotx, float roty, float rotz) {
-	float* matrix = njPushUnitMatrix();
-	njTranslateV(matrix, pos);
-	njRotateZ(matrix, rotx);
-	njRotateY(matrix, roty);
-	njRotateX(matrix, rotz);
-	NJS_VECTOR point = njCalcPoint(matrix, 5, 10, -2);
-	njPopMatrix(1u);
-
-	return { point.x + pos->x, point.y + pos->y, point.z + pos->z };
+		if (co2) {
+			co2->PhysData.GroundAccel += static_cast<float>(min(99, chaodata->data.StatLevels[2])) / 90.0f;
+			co2->PhysData.JumpSpeed += static_cast<float>(min(99, chaodata->data.StatLevels[1])) / 99.0f;
+			co2->PhysData.HSpeedCap += static_cast<float>(min(99, chaodata->data.StatLevels[4])) / 30.0f;
+			co2->PhysData.MaxAccel += static_cast<float>(min(99, chaodata->data.StatLevels[3])) / 60.0f;
+		}
+	}
 }
 
-NJS_VECTOR GetChaoPointPlayerPtr(EntityData1* playerdata) {
-	return GetChaoPointToFollow(&playerdata->Position, playerdata->Rotation.x, -playerdata->Rotation.y + 0x4000, playerdata->Rotation.z);
+void LoadChaoLevel(int id) {
+	EntityData1* player = MainCharObj1[id];
+	NJS_VECTOR pos = { 0, 0, 0 };
+
+	if (player && CarriedChao[id].mode == ChaoLeashMode_Free) {
+		PutBehindPlayer(&pos, player, 5.0f);
+	}
+
+	ObjectMaster* chao = CreateChao(CarriedChao[id].data, 0, 0, &pos, 0);
+	chao->Data1.Chao->entity.field_2 = id;
+	SetChaoPowerups(id, CarriedChao[id].data);
+
+	if (CarriedChao[id].mode == ChaoLeashMode_Fly) {
+		chao->Data1.Chao->entity.Status |= StatusChao_FlyPlayer;
+	}
 }
 
-void __cdecl ChaoHandler(ObjectMaster* obj) {
-	ChaoHandlerData1* data = (ChaoHandlerData1*)obj->Data1.Undefined;
-	EntityData1* playerdata = MainCharObj1[data->player];
-
-	switch (data->Action) {
-	case ChaoHandlerActions::LoadChao:
-		data->chaodata = &CreateChao(CarriedChao, 0, 0, &GetChaoPointPlayerPtr(playerdata), 0)->Data1.Chao->entity;
-		data->Action = ChaoHandlerActions::Attached;
-		break;
-	case ChaoHandlerActions::Free:
-		if (Controllers[data->player].press & Buttons_L) {
-			data->Action = ChaoHandlerActions::Attached;
-		}
-
-		break;
-	case ChaoHandlerActions::Attached:
-		if (Controllers[data->player].press & Buttons_L) {
-			data->Action = ChaoHandlerActions::Free;
-		}
-
-		data->dest = GetChaoPointPlayerPtr(playerdata);
-		data->dist = GetDistance(&data->dest, &data->chaodata->Position);
-		data->chaodata->Action = 1;
-
-		if (data->dist < 3) {
-			data->chaodata->Rotation.y = -playerdata->Rotation.y + 0x4000;
-			data->chaodata->Position = data->dest;
-		}
-		else {
-			data->chaodata->Position = TransformSpline(&data->chaodata->Position, &data->dest, data->dist / (100 + (400 - data->dist)));
-			data->chaodata->Rotation.y = -fPositionToRotation(&data->chaodata->Position, &data->dest).y - 0x4000;
-		}
-
-		break;
+void ClearChao(int player) {
+	if (CarriedChao[player].mode != ChaoLeashMode_Disabled) {
+		delete CarriedChao[player].data;
+		CarriedChao[player].mode = ChaoLeashMode_Disabled;
 	}
 }
 
 // Load chao data at the level initialization
-void LoadLevelInit_Chao() {
-	DynamicVoidFunc(original, LoadLevelInit_t->Target());
-	original();
+void LoadLevelInit_r() {
+	TARGET_DYNAMIC(LoadLevelInit)();
 
 	// The carried chao is removed if going back to the chao world
 	// If it's a level, we load chao data
 
-	if (CarriedChao) {
+	if ((CarriedChao[0].mode != ChaoLeashMode_Disabled || CarriedChao[1].mode != ChaoLeashMode_Disabled) && 
+		(CurrentLevel < 70 || CurrentLevel > 71)) {
 		if (CurrentLevel == LevelIDs_ChaoWorld) {
-			delete CarriedChao;
-			CarriedChao = nullptr;
+			ClearChao(0);
+			ClearChao(1);
 		}
 		else {
 			LoadTextureList((char*)"AL_MINI_PARTS_TEX", (NJS_TEXLIST*)0x1366AE4);
@@ -103,18 +76,23 @@ void LoadLevelInit_Chao() {
 }
 
 // Load the chao itself at each load/restart
-void LoadLevelManager_Chao() {
-	DynamicVoidFunc(original, LoadLevelManager_t->Target());
-	original();
+void LoadLevelManager_r() {
+	TARGET_DYNAMIC(LoadLevelManager)();
 
-	if (CurrentLevel != LevelIDs_ChaoWorld && CarriedChao) {
-		LoadObject(2, "ChaoInLevelHandler", ChaoHandler, LoadObj_Data1);
+	if (CurrentLevel != LevelIDs_ChaoWorld && (CurrentLevel < 70 || CurrentLevel > 71)) {
+		if (CarriedChao[0].mode != ChaoLeashMode_Disabled) {
+			LoadChaoLevel(0);
+		}
+		
+		if (CarriedChao[1].mode != ChaoLeashMode_Disabled) {
+			LoadChaoLevel(1);
+		}
 	}
 }
 
 // Delete the chao files when the level is finished/exited
-void* LoadLevelDestroy_Chao() {
-	if (CarriedChao) {
+void* LoadLevelDestroy_r() {
+	if (CarriedChao && (CurrentLevel < 70 || CurrentLevel > 71)) {
 		FreeTexList((NJS_TEXLIST*)0x1366AE4);
 		FreeTexList((NJS_TEXLIST*)0x13669FC);
 		FreeTexList((NJS_TEXLIST*)0x1366AD4);
@@ -125,54 +103,57 @@ void* LoadLevelDestroy_Chao() {
 		FreeTexList((NJS_TEXLIST*)0x1366ABC);
 	}
 
-	NonStaticFunctionPointer(void*, original, (), LoadLevelDestroy_t->Target());
-	return original();
+	return TARGET_DYNAMIC(LoadLevelDestroy)();
 }
 
 // Select the chao when leaving a garden
-BYTE* __cdecl ChangeChaoStage_Chao(int area) {
+BYTE* __cdecl ChangeChaoStage_r(int area) {
 	if (area == 7) {
-		if (!CarriedChao) {
-			if (MainCharObj2[0]->HeldObject) {
-				ChaoData1* data = MainCharObj2[0]->HeldObject->Data1.Chao;
+		for (int i = 0; i < 2; ++i) {
+			if (CarriedChao[i].mode == ChaoLeashMode_Disabled) {
+				if (MainCharObj2[i] && MainCharObj2[i]->HeldObject) {
+					ChaoData1* data = MainCharObj2[i]->HeldObject->Data1.Chao;
 
-				if (data && data->ChaoDataBase_ptr) {
+					if (data && data->ChaoDataBase_ptr) {
 
-					// Loop through the chao slots to get if it's a valid chao
-					for (uint8_t i = 0; i < 24; ++i) {
-						if (&ChaoSlots[i].data == data->ChaoDataBase_ptr) {
+						// Loop through the chao slots to get if it's a valid chao
+						for (uint8_t j = 0; j < 24; ++j) {
+							if (&ChaoSlots[j].data == data->ChaoDataBase_ptr) {
 
-							if (data->ChaoDataBase_ptr->Type != ChaoType_Empty && data->ChaoDataBase_ptr->Type != ChaoType_Egg) {
-								CarriedChao = new ChaoData;
-								memcpy(CarriedChao, &ChaoSlots[i], sizeof(ChaoData));
+								if (data->ChaoDataBase_ptr->Type != ChaoType_Empty && data->ChaoDataBase_ptr->Type != ChaoType_Egg) {
+									CarriedChao[i].mode = ChaoLeashMode_Fly;
+									CarriedChao[i].data = new ChaoData;
+									memcpy(CarriedChao[i].data, &ChaoSlots[j], sizeof(ChaoData));
+								}
 							}
 						}
 					}
 				}
 			}
 		}
-		else {
-			delete CarriedChao;
-			CarriedChao = nullptr;
-		}
 	}
 
-	NonStaticFunctionPointer(BYTE*, original, (int area), ChangeChaoStage_t->Target());
-	return original(area);
+	return TARGET_DYNAMIC(ChangeChaoStage)(area);
 }
 
 extern "C"
 {
 	__declspec(dllexport) void Init(const char* path, const HelperFunctions& helperFunctions) {
-		LoadLevelInit_t = new Trampoline(0x43CB10, 0x43CB16, LoadLevelInit_Chao);
-		LoadLevelManager_t = new Trampoline(0x43CB50, 0x43CB56, LoadLevelManager_Chao);
-		LoadLevelDestroy_t = new Trampoline(0x454CC0, 0x454CC8, LoadLevelDestroy_Chao);
-		ChangeChaoStage_t = new Trampoline(0x52B5B0, 0x52B5B6, ChangeChaoStage_Chao);
+		const IniFile* config = new IniFile(std::string(path) + "\\config.ini");
+		ChaoPowerups = config->getBool("Functionalities", "EnablePowerups", false);
+		ChaoAssist = config->getBool("Functionalities", "EnableChaoAssist", true);
+		ChaoLuck = config->getBool("Functionalities", "EnableChaoLuck", true);
+		delete config;
+
+		LoadLevelInit_t = new Trampoline(0x43CB10, 0x43CB16, LoadLevelInit_r);
+		LoadLevelManager_t = new Trampoline(0x43CB50, 0x43CB56, LoadLevelManager_r);
+		LoadLevelDestroy_t = new Trampoline(0x454CC0, 0x454CC8, LoadLevelDestroy_r);
+		ChangeChaoStage_t = new Trampoline(0x52B5B0, 0x52B5B6, ChangeChaoStage_r);
 
 		#ifndef NDEBUG
-		if (!CarriedChao) {
-			CarriedChao = new ChaoData();
-		}
+		CarriedChao[0].data = new ChaoData();
+		CarriedChao[0].data->data.Type == ChaoType_Child;
+		CarriedChao[0].mode = ChaoLeashMode_Fly;
 		#endif
 	}
 

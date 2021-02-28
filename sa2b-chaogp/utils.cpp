@@ -1,49 +1,75 @@
 #include "stdafx.h"
 
-Rotation fPositionToRotation(NJS_VECTOR* orig, NJS_VECTOR* point) {
-	NJS_VECTOR dist;
-	Rotation result;
+void LookAt(NJS_VECTOR* from, NJS_VECTOR* to, Angle* outx, Angle* outy) {
+	NJS_VECTOR unit = *to;
 
-	dist.x = point->x - orig->x;
-	dist.y = point->y - orig->y;
-	dist.z = point->z - orig->z;
+	unit.x -= from->x;
+	unit.y -= from->y;
+	unit.z -= from->z;
 
-	result.x = atan2(dist.y, dist.z) * 65536.0 * -0.1591549762031479;
-	result.y = atan2(dist.x, dist.z) * 65536.0 * 0.1591549762031479;
+	if (outy) {
+		*outy = static_cast<Angle>(atan2f(unit.x, unit.z) * 65536.0f * 0.1591549762031479f);
+	}
 
-	result.y = -result.y - 0x4000;
-	return result;
-}
+	if (outx) {
+		if (from->y == to->y) {
+			*outx = 0;
+		}
+		else {
+			Float len = 1.0f / sqrtf(unit.z * unit.z + unit.x * unit.x + unit.y * unit.y);
 
-NJS_VECTOR TransformSpline(NJS_VECTOR* orig, NJS_VECTOR* dest, float state) {
-	return { (dest->x - orig->x) * state + orig->x,
-			(dest->y - orig->y) * state + orig->y,
-			(dest->z - orig->z) * state + orig->z };
+			*outx = static_cast<Angle>((acos(len * 3.3499999f) * 65536.0f * 0.1591549762031479f)
+				- (acos(-(len * unit.y)) * 65536.0f * 0.1591549762031479f));
+		}
+	}
 }
 
 float GetDistance(NJS_VECTOR* orig, NJS_VECTOR* dest) {
 	return sqrtf(powf(dest->x - orig->x, 2) + powf(dest->y - orig->y, 2) + powf(dest->z - orig->z, 2));
 }
 
-float* njPushUnitMatrix() {
-	float* v8 = _nj_current_matrix_ptr_;
-	float* v9 = _nj_current_matrix_ptr_ + 12;
-	v8 = _nj_current_matrix_ptr_ + 12;
-	memcpy(v9, _nj_current_matrix_ptr_, 0x30u);
-	_nj_current_matrix_ptr_ = v9;
-	memset(v8, 0, 0x30u);
-	*v8 = 1.0;
-	v8[5] = 1.0;
-	v8[10] = 1.0;
-	return v8;
+void njGetTranslation(NJS_MATRIX_PTR m, NJS_VECTOR* pos) {
+	if (!m) {
+		m = _nj_current_matrix_ptr_;
+	}
+
+	pos->x = m[M03];
+	pos->y = m[M13];
+	pos->z = m[M23];
 }
 
-void njTranslateV(float* matrix, NJS_VECTOR* pos) {
-	njTranslate(matrix, pos->x, pos->y, pos->z);
+NJS_VECTOR GetPointToFollow(NJS_VECTOR* pos, NJS_VECTOR* dir, Rotation* rot) {
+	NJS_VECTOR point;
+	njPushUnitMatrix(0);
+	njTranslateEx(pos);
+	njRotateZ(_nj_current_matrix_ptr_, rot->z);
+	njRotateX(_nj_current_matrix_ptr_, rot->x);
+	njRotateY(_nj_current_matrix_ptr_, -rot->y);
+	njTranslateEx(dir);
+	njGetTranslation(_nj_current_matrix_ptr_, &point);
+	njPopMatrix(1u);
+
+	return point;
 }
 
-NJS_VECTOR njCalcPoint(float* matrix, float x, float y, float z) {
-	return { matrix[1] * y + *matrix * x + matrix[2] * z,
-			matrix[4] * x + matrix[5] * y + matrix[6] * z,
-			matrix[8] * x + matrix[9] * y + matrix[10] * z };
+void MoveForward(EntityData1* entity, float speed) {
+	NJS_VECTOR point = { 0, 0, 0 };
+
+	njPushUnitMatrix(0);
+	njTranslateEx(&entity->Position);
+	njRotateY(_nj_current_matrix_ptr_, entity->Rotation.y);
+	njRotateX(_nj_current_matrix_ptr_, entity->Rotation.x);
+	njTranslate(_nj_current_matrix_ptr_, 0.0f, 0.0f, speed);
+	njGetTranslation(_nj_current_matrix_ptr_, &entity->Position);
+	njPopMatrix(1u);
+}
+
+void PutBehindPlayer(NJS_VECTOR* pos, EntityData1* data, float dist) {
+	if (data) {
+		if (pos) {
+			pos->x = data->Position.x - njCos(data->Rotation.y) * dist;
+			pos->y = data->Position.y;
+			pos->z = data->Position.z - njSin(data->Rotation.y) * dist;
+		}
+	}
 }
