@@ -57,8 +57,6 @@ void IdlePlayer(ChaoData1* data1, EntityData1* player, CharObj2Base* co2) {
 	}
 }
 
-int lol = 0;
-
 void LevelChao_Fly(ObjectMaster* obj, ChaoData1* data1, ChaoLeash* leash, EntityData1* player, CharObj2Base* co2) {
 	switch (data1->entity.NextAction) {
 	case ChaoAct_FollowPlayer:
@@ -72,8 +70,7 @@ void LevelChao_Fly(ObjectMaster* obj, ChaoData1* data1, ChaoLeash* leash, Entity
 
 	// Flying animation
 	if (FrameCountIngame % 30 == 0) {
-		Chao_Animation(&data1->MotionTable, 286); //130  286
-		lol += 1;
+		Chao_Animation(&data1->MotionTable, 286); // or 130, 286
 	}
 
 	Chao_PlayAnimation(obj);
