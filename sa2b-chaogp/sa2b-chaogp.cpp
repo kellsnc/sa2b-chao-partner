@@ -18,10 +18,9 @@ static void SetChaoPowerups(int id, ChaoData* chaodata)
 
 		if (co2)
 		{
-			co2->PhysData.RunSpeed += static_cast<float>(min(99, chaodata->data.StatLevels[ChaoStat_Run])) / 900.0f;
-			co2->PhysData.JumpSpeed += static_cast<float>(min(99, chaodata->data.StatLevels[ChaoStat_Fly])) / 600.0f;
+			co2->PhysData.RunSpeed += static_cast<float>(min(99, chaodata->data.StatLevels[ChaoStat_Run])) / 500.0f;
+			co2->PhysData.JumpSpeed += static_cast<float>(min(99, chaodata->data.StatLevels[ChaoStat_Power])) / 300.0f;
 			co2->PhysData.SpeedCapH += static_cast<float>(min(99, chaodata->data.StatLevels[ChaoStat_Stamina])) / 200.0f;
-			co2->PhysData.DashSpeed += static_cast<float>(min(99, chaodata->data.StatLevels[ChaoStat_Power])) / 400.0f;
 		}
 	}
 }
