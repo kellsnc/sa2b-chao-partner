@@ -11,24 +11,28 @@ bool ChaoLuck = true;
 
 ChaoLeash CarriedChao[2] = {};
 
-void SetChaoPowerups(int id, ChaoData* chaodata) {
+static void SetChaoPowerups(int id, ChaoData* chaodata)
+{
 	if (ChaoPowerups == true) {
 		CharObj2Base* co2 = MainCharObj2[id];
 
-		if (co2) {
-			co2->PhysData.GroundAccel += static_cast<float>(min(99, chaodata->data.StatLevels[ChaoStat_Run])) / 900.0f;
+		if (co2)
+		{
+			co2->PhysData.RunSpeed += static_cast<float>(min(99, chaodata->data.StatLevels[ChaoStat_Run])) / 900.0f;
 			co2->PhysData.JumpSpeed += static_cast<float>(min(99, chaodata->data.StatLevels[ChaoStat_Fly])) / 600.0f;
-			co2->PhysData.HSpeedCap += static_cast<float>(min(99, chaodata->data.StatLevels[ChaoStat_Stamina])) / 200.0f;
-			co2->PhysData.MaxAccel += static_cast<float>(min(99, chaodata->data.StatLevels[ChaoStat_Power])) / 400.0f;
+			co2->PhysData.SpeedCapH += static_cast<float>(min(99, chaodata->data.StatLevels[ChaoStat_Stamina])) / 200.0f;
+			co2->PhysData.DashSpeed += static_cast<float>(min(99, chaodata->data.StatLevels[ChaoStat_Power])) / 400.0f;
 		}
 	}
 }
 
-void LoadChaoLevel(int id) {
+static void LoadChaoLevel(int id)
+{
 	EntityData1* player = MainCharObj1[id];
 	NJS_VECTOR pos = { 0, 0, 0 };
 
-	if (player && CarriedChao[id].mode == ChaoLeashMode_Free) {
+	if (player && CarriedChao[id].mode == ChaoLeashMode_Free)
+	{
 		PutBehindPlayer(&pos, player, 5.0f);
 	}
 
@@ -36,32 +40,39 @@ void LoadChaoLevel(int id) {
 	chao->Data1.Chao->entity.field_2 = id;
 	SetChaoPowerups(id, CarriedChao[id].data);
 
-	if (CarriedChao[id].mode == ChaoLeashMode_Fly) {
+	if (CarriedChao[id].mode == ChaoLeashMode_Fly)
+	{
 		chao->Data1.Chao->entity.Status |= StatusChao_FlyPlayer;
 	}
 }
 
-void ClearChao(int player) {
-	if (CarriedChao[player].mode != ChaoLeashMode_Disabled) {
+static void ClearChao(int player)
+{
+	if (CarriedChao[player].mode != ChaoLeashMode_Disabled)
+	{
 		delete CarriedChao[player].data;
 		CarriedChao[player].mode = ChaoLeashMode_Disabled;
 	}
 }
 
 // Load chao data at the level initialization
-void LoadLevelInit_r() {
+static void LoadLevelInit_r()
+{
 	TARGET_DYNAMIC(LoadLevelInit)();
 
 	// The carried chao is removed if going back to the chao world
 	// If it's a level, we load chao data
 
 	if ((CarriedChao[0].mode != ChaoLeashMode_Disabled || CarriedChao[1].mode != ChaoLeashMode_Disabled) && 
-		(CurrentLevel < 70 || CurrentLevel > 71)) {
-		if (CurrentLevel == LevelIDs_ChaoWorld) {
+		(CurrentLevel < 70 || CurrentLevel > 71))
+	{
+		if (CurrentLevel == LevelIDs_ChaoWorld)
+		{
 			ClearChao(0);
 			ClearChao(1);
 		}
-		else {
+		else
+		{
 			LoadTextureList((char*)"AL_MINI_PARTS_TEX", (NJS_TEXLIST*)0x1366AE4);
 			LoadTextureList((char*)"AL_BODY", (NJS_TEXLIST*)0x13669FC);
 			LoadTextureList((char*)"AL_jewel", (NJS_TEXLIST*)0x1366AD4);
@@ -76,23 +87,29 @@ void LoadLevelInit_r() {
 }
 
 // Load the chao itself at each load/restart
-void LoadLevelManager_r() {
+static void LoadLevelManager_r()
+{
 	TARGET_DYNAMIC(LoadLevelManager)();
 
-	if (CurrentLevel != LevelIDs_ChaoWorld && (CurrentLevel < 70 || CurrentLevel > 71)) {
-		if (CarriedChao[0].mode != ChaoLeashMode_Disabled) {
+	if (CurrentLevel != LevelIDs_ChaoWorld && (CurrentLevel < 70 || CurrentLevel > 71))
+	{
+		if (CarriedChao[0].mode != ChaoLeashMode_Disabled)
+		{
 			LoadChaoLevel(0);
 		}
 		
-		if (CarriedChao[1].mode != ChaoLeashMode_Disabled) {
+		if (CarriedChao[1].mode != ChaoLeashMode_Disabled)
+		{
 			LoadChaoLevel(1);
 		}
 	}
 }
 
 // Delete the chao files when the level is finished/exited
-void* LoadLevelDestroy_r() {
-	if (CarriedChao && (CurrentLevel < 70 || CurrentLevel > 71)) {
+static void* LoadLevelDestroy_r()
+{
+	if (CarriedChao && (CurrentLevel < 70 || CurrentLevel > 71))
+	{
 		FreeTexList((NJS_TEXLIST*)0x1366AE4);
 		FreeTexList((NJS_TEXLIST*)0x13669FC);
 		FreeTexList((NJS_TEXLIST*)0x1366AD4);
@@ -107,20 +124,26 @@ void* LoadLevelDestroy_r() {
 }
 
 // Select the chao when leaving a garden
-BYTE* __cdecl ChangeChaoStage_r(int area) {
-	if (area == 7) {
-		for (int i = 0; i < 2; ++i) {
-			if (CarriedChao[i].mode == ChaoLeashMode_Disabled) {
-				if (MainCharObj2[i] && MainCharObj2[i]->HeldObject) {
+static BYTE* __cdecl ChangeChaoStage_r(int area) {
+	if (area == 7)
+	{
+		for (int i = 0; i < 2; ++i)
+		{
+			if (CarriedChao[i].mode == ChaoLeashMode_Disabled)
+			{
+				if (MainCharObj2[i] && MainCharObj2[i]->HeldObject)
+				{
 					ChaoData1* data = MainCharObj2[i]->HeldObject->Data1.Chao;
 
-					if (data && data->ChaoDataBase_ptr) {
-
+					if (data && data->ChaoDataBase_ptr)
+					{
 						// Loop through the chao slots to get if it's a valid chao
-						for (uint8_t j = 0; j < 24; ++j) {
-							if (&ChaoSlots[j].data == data->ChaoDataBase_ptr) {
-
-								if (data->ChaoDataBase_ptr->Type != ChaoType_Empty && data->ChaoDataBase_ptr->Type != ChaoType_Egg) {
+						for (uint8_t j = 0; j < 24; ++j)
+						{
+							if (&ChaoSlots[j].data == data->ChaoDataBase_ptr)
+							{
+								if (data->ChaoDataBase_ptr->Type != ChaoType_Empty && data->ChaoDataBase_ptr->Type != ChaoType_Egg)
+								{
 									CarriedChao[i].mode = ChaoLeashMode_Fly;
 									CarriedChao[i].data = new ChaoData;
 									memcpy(CarriedChao[i].data, &ChaoSlots[j], sizeof(ChaoData));
@@ -138,7 +161,8 @@ BYTE* __cdecl ChangeChaoStage_r(int area) {
 
 extern "C"
 {
-	__declspec(dllexport) void Init(const char* path, const HelperFunctions& helperFunctions) {
+	__declspec(dllexport) void Init(const char* path, const HelperFunctions& helperFunctions)
+	{
 		const IniFile* config = new IniFile(std::string(path) + "\\config.ini");
 		ChaoPowerups = config->getBool("Functionalities", "EnablePowerups", false);
 		ChaoAssist = config->getBool("Functionalities", "EnableChaoAssist", true);
