@@ -101,6 +101,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="utils.cpp" />
+    <ClCompile Include="water.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\sa2-mod-loader\libmodutils\libmodutils.vcxproj">

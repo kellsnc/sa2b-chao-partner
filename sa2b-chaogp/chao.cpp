@@ -116,6 +116,11 @@ static void IdlePlayer(ChaoData1* data1, EntityData1* player, CharObj2Base* co2)
 	MoveForward(&data1->entity, 0.1f);
 }
 
+bool CheckFlyButton(int playerid)
+{
+	return Controllers[playerid].press & Buttons_L && Controllers[playerid].press & Buttons_R;
+}
+
 static void LevelChao_Fly(ObjectMaster* obj, ChaoData1* data1, ChaoLeash* leash, EntityData1* player, CharObj2Base* co2)
 {
 	switch (data1->entity.NextAction) {
@@ -145,7 +150,7 @@ static void LevelChao_Fly(ObjectMaster* obj, ChaoData1* data1, ChaoLeash* leash,
 	Chao_MoveEmotionBall(obj);
 	Chao_RunPhysics(obj);
 
-	if (Controllers[data1->entity.field_2].press & Buttons_L)
+	if (CheckFlyButton(data1->entity.field_2))
 	{
 		data1->entity.Status &= ~StatusChao_FlyPlayer;
 		leash->mode = ChaoLeashMode_Free;
@@ -166,7 +171,7 @@ static void LevelChao_Normal(ObjectMaster* obj, ChaoData1* data1, ChaoLeash* lea
 		Chao_RunGravity(obj);
 		leash->mode = ChaoLeashMode_Free;
 
-		if (Controllers[data1->entity.field_2].press & Buttons_L)
+		if (CheckFlyButton(data1->entity.field_2))
 		{
 			data1->entity.Status |= StatusChao_FlyPlayer;
 			leash->mode = ChaoLeashMode_Fly;

@@ -29,10 +29,24 @@ struct ChaoLeash {
 	CustomData custom;
 };
 
+#pragma pack(push, 1)
+struct ChaoData2
+{
+	char gap0[4];
+	float float4;
+	char gap8[212];
+	float WaterHeight;
+};
+#pragma pack(pop)
+
 extern bool ChaoAssist;
 extern bool ChaoLuck;
 
 extern ChaoLeash CarriedChao[2];
+
+FunctionPointer(void, GetActiveCollisions, (float x, float y, float z, float s), 0x47CD60);
+FunctionPointer(void, GetCharacterSurfaceInfo, (NJS_VECTOR* position, CharSurfaceInfo* surface), 0x494DF0);
+DataPointer(uint16_t, ActiveColCount, 0x1DE9484);
 
 //void __usercall Chao_RunMovements(ObjectMaster* obj@<eax>)
 static const void* const Chao_RunMovementsPtr = (void*)0x0053DC40;
@@ -114,5 +128,35 @@ static inline void Chao_RunPhysics(ObjectMaster* obj)
 	{
 		mov eax, obj
 		call Chao_RunPhysicsPtr
+	}
+}
+
+//void __usercall RunChaoBehaviour@<eax>(ObjectMaster* obj@<eax>, void* func, int idk)
+static const void* const RunChaoBehaviourPtr = (void*)0x53D890;
+static inline void RunChaoBehaviour(ObjectMaster* obj, void* func, int idk)
+{
+	__asm
+	{
+		push[idk]
+		push[func]
+		mov eax, [obj]
+		call RunChaoBehaviourPtr
+		add esp, 8
+	}
+}
+
+//char __usercall SE_CallV2@<al>(int id@<edi>, NJS_VECTOR* position@<esi>, ObjectMaster* entity, char bank, char volume)
+static const void* const SE_CallV2Ptr = (void*)0x4372E0;
+static inline void SE_CallV2(int id, NJS_VECTOR* position, ObjectMaster* entity, char bank, char volume)
+{
+	__asm
+	{
+		push[volume]
+		push[bank]
+		push[entity]
+		mov esi, [position]
+		mov edi, [id]
+		call SE_CallV2Ptr
+		add esp, 12
 	}
 }
