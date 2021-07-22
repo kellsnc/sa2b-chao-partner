@@ -16,10 +16,10 @@ void SetChaoPowerups(int id, ChaoData* chaodata) {
 		CharObj2Base* co2 = MainCharObj2[id];
 
 		if (co2) {
-			co2->PhysData.GroundAccel += static_cast<float>(min(99, chaodata->data.StatLevels[2])) / 900.0f;
-			co2->PhysData.JumpSpeed += static_cast<float>(min(99, chaodata->data.StatLevels[1])) / 600.0f;
-			co2->PhysData.HSpeedCap += static_cast<float>(min(99, chaodata->data.StatLevels[4])) / 200.0f;
-			co2->PhysData.MaxAccel += static_cast<float>(min(99, chaodata->data.StatLevels[3])) / 400.0f;
+			co2->PhysData.GroundAccel += static_cast<float>(min(99, chaodata->data.StatLevels[ChaoStat_Run])) / 900.0f;
+			co2->PhysData.JumpSpeed += static_cast<float>(min(99, chaodata->data.StatLevels[ChaoStat_Fly])) / 600.0f;
+			co2->PhysData.HSpeedCap += static_cast<float>(min(99, chaodata->data.StatLevels[ChaoStat_Stamina])) / 200.0f;
+			co2->PhysData.MaxAccel += static_cast<float>(min(99, chaodata->data.StatLevels[ChaoStat_Power])) / 400.0f;
 		}
 	}
 }

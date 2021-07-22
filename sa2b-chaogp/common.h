@@ -17,9 +17,16 @@ enum StatusChao : __int16 {
 	StatusChao_Attacked = 0x4000
 };
 
+struct CustomData {
+	NJS_VECTOR targetPos;
+	uint16_t noAutoAttackTimer;
+	uint16_t noAttackTimer;
+};
+
 struct ChaoLeash {
 	ChaoLeashModes mode;
 	ChaoData* data;
+	CustomData custom;
 };
 
 extern bool ChaoAssist;

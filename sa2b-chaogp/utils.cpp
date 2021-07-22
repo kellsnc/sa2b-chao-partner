@@ -53,8 +53,6 @@ NJS_VECTOR GetPointToFollow(NJS_VECTOR* pos, NJS_VECTOR* dir, Rotation* rot) {
 }
 
 void MoveForward(EntityData1* entity, float speed) {
-	NJS_VECTOR point = { 0, 0, 0 };
-
 	njPushUnitMatrix(0);
 	njTranslateEx(&entity->Position);
 	njRotateY(_nj_current_matrix_ptr_, entity->Rotation.y);
@@ -71,5 +69,53 @@ void PutBehindPlayer(NJS_VECTOR* pos, EntityData1* data, float dist) {
 			pos->y = data->Position.y;
 			pos->z = data->Position.z - njSin(data->Rotation.y) * dist;
 		}
+	}
+}
+
+EntityData1* GetClosestAttack(NJS_VECTOR* pos, Float range, int playerid) {
+	EntityData1* entityReturn = nullptr;
+	Float distanceMin = 10000000;
+
+	uint16_t count = playerid != 1 ? TargetEntitiesP1_Count : TargetEntitiesP2_Count;
+	TargetEntityStruct* entitiesArray = playerid != 1 ? TargetEntitiesP1 : TargetEntitiesP2;
+
+	for (int i = 0; i < count; ++i) {
+		TargetEntityStruct* current = &entitiesArray[i];
+
+		if (current->entity && current->distance < distanceMin) {
+			distanceMin = current->distance;
+			entityReturn = current->entity;
+		}
+	}
+
+	if (distanceMin < range) {
+		return entityReturn;
+	}
+	else {
+		return nullptr;
+	}
+}
+
+EntityData1* GetClosestRing(NJS_VECTOR* pos, Float range, int playerid) {
+	EntityData1* entityReturn = nullptr;
+	Float distanceMin = 10000000;
+
+	uint16_t count = playerid != 1 ? TargetRingEntitiesP1_Count : TargetRingEntitiesP2_Count;
+	TargetEntityStruct* entitiesArray = playerid != 1 ? TargetRingEntitiesP1 : TargetRingEntitiesP2;
+
+	for (int i = 0; i < count; ++i) {
+		TargetEntityStruct* current = &entitiesArray[i];
+
+		if (current->entity && current->distance < distanceMin) {
+			distanceMin = current->distance;
+			entityReturn = current->entity;
+		}
+	}
+
+	if (distanceMin < range) {
+		return entityReturn;
+	}
+	else {
+		return nullptr;
 	}
 }
