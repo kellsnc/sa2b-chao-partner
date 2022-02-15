@@ -1,6 +1,7 @@
 #include "stdafx.h"
 
-float GetWaterHeight(ChaoData1* chaodata1) {
+float GetWaterHeight(ChaoData1* chaodata1)
+{
     NJS_VECTOR pos = { chaodata1->entity.Position.x, chaodata1->entity.Position.y - 2.0f, chaodata1->entity.Position.z };
     CharSurfaceInfo surfaceinfo;
 
@@ -17,17 +18,18 @@ float GetWaterHeight(ChaoData1* chaodata1) {
     }
 }
 
-signed int __cdecl Chao_DetectWater_r(ObjectMaster* obj);
+BOOL __cdecl Chao_DetectWater_r(ObjectMaster* obj);
 Trampoline Chao_DetectWater_t(0x561630, 0x561635, Chao_DetectWater_r);
-signed int __cdecl Chao_DetectWater_r(ObjectMaster* obj) {
-	ChaoData1* data1 = (ChaoData1*)obj->Data1.Chao;
+BOOL __cdecl Chao_DetectWater_r(ObjectMaster* obj)
+{
+    ChaoData1* data1 = (ChaoData1*)obj->Data1.Chao;
 
-	if (CurrentLevel == LevelIDs_ChaoWorld)
-	{
-		return ((decltype(Chao_DetectWater_r)*)Chao_DetectWater_t.Target())(obj);
-	}
-	else
-	{
+    if (CurrentLevel == LevelIDs_ChaoWorld)
+    {
+        return ((decltype(Chao_DetectWater_r)*)Chao_DetectWater_t.Target())(obj);
+    }
+    else
+    {
         ChaoData1* data = obj->Data1.Chao;
         ChaoData2* data2 = (ChaoData2*)obj->EntityData2;
 
@@ -38,7 +40,7 @@ signed int __cdecl Chao_DetectWater_r(ObjectMaster* obj) {
             if (data->entity.Position.y + 2.0f >= data2->WaterHeight)
             {
                 data->ChaoBehaviourInfo.CurrentActionInfo.field_0 &= 0xFFFAu;
-                return 0;
+                return FALSE;
             }
             else
             {
@@ -49,20 +51,19 @@ signed int __cdecl Chao_DetectWater_r(ObjectMaster* obj) {
                     RunChaoBehaviour(obj, (void*)0x562330, -1);
                 }
 
-                if (data2->float4 < 0.0)
+                if (data2->float4 < 0.0f)
                 {
-                    data2->float4 = data2->float4 * 0.1000000014901161;
+                    data2->float4 *= 0.1f;
                 }
 
                 data->ChaoBehaviourInfo.CurrentActionInfo.field_0 |= 4u;
-
-                return 1;
+                return TRUE;
             }
         }
         else
         {
             data->ChaoBehaviourInfo.CurrentActionInfo.field_0 &= 0xFFFEu;
-            return 0;
+            return FALSE;
         }
-	}
+    }
 }
