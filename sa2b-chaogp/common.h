@@ -29,23 +29,12 @@ struct ChaoLeash {
 	CustomData custom;
 };
 
-#pragma pack(push, 1)
-struct ChaoData2
-{
-	char gap0[4];
-	float float4;
-	char gap8[212];
-	float WaterHeight;
-};
-#pragma pack(pop)
-
 extern bool ChaoAssist;
 extern bool ChaoLuck;
 
 extern ChaoLeash CarriedChao[2];
 
 FunctionPointer(void, GetActiveCollisions, (float x, float y, float z, float s), 0x47CD60);
-FunctionPointer(void, GetCharacterSurfaceInfo, (NJS_VECTOR* position, CharSurfaceInfo* surface), 0x494DF0);
 DataPointer(uint16_t, ActiveColCount, 0x1DE9484);
 
 //void __usercall Chao_RunMovements(ObjectMaster* obj@<eax>)
