@@ -36,3 +36,13 @@ void PutBehindPlayer(NJS_VECTOR* pos, EntityData1* data, float dist);
 
 EntityData1* GetClosestAttack(NJS_VECTOR* pos, Float range, int playerid);
 EntityData1* GetClosestRing(NJS_VECTOR* pos, Float range, int playerid);
+
+static const void* const sub_53CAC0Ptr = (void*)0x53CAC0;
+static inline void sub_53CAC0(ObjectMaster* a1)
+{
+	__asm
+	{
+		mov eax, [a1]
+		call sub_53CAC0Ptr
+	}
+}

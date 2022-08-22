@@ -195,6 +195,11 @@ void __cdecl Chao_Main_r(ObjectMaster* obj)
 
 	if (CurrentLevel != LevelIDs::LevelIDs_ChaoWorld)
 	{
+		if (data1->gap_30 <= 2u)
+		{
+			sub_53CAC0(obj);
+		}
+
 		EntityData1* player = MainCharObj1[data1->entity.field_2];
 		EntityData2* pmotion = (EntityData2*)MainCharacter[data1->entity.field_2]->EntityData2;
 		CharObj2Base* co2 = MainCharObj2[data1->entity.field_2];
@@ -218,8 +223,17 @@ void __cdecl Chao_Main_r(ObjectMaster* obj)
 			LevelChao_Fly(obj, data1, leash, player, co2);
 		}
 
+		++data1->gap_30;
+
 		if (!(data1->entity.Status & StatusChao_Held)) {
-			AddToCollisionList(obj);
+			if ((data1->Flags & 8) != 0)
+			{
+				AddToCollisionList(obj);
+			}
+			else
+			{
+				Collision_InitThings(obj);
+			}
 		}
 	}
 	else {

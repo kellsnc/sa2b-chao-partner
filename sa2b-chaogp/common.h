@@ -140,8 +140,10 @@ static inline void SE_CallV2(int id, NJS_VECTOR* position, ObjectMaster* entity,
 {
 	__asm
 	{
-		push[volume]
-		push[bank]
+		movzx eax, [volume]
+		push eax
+		movzx eax, [bank]
+		push eax
 		push[entity]
 		mov esi, [position]
 		mov edi, [id]
