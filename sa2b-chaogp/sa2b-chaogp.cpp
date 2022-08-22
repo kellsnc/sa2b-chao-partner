@@ -11,6 +11,29 @@ bool ChaoLuck = true;
 
 ChaoLeash CarriedChao[2] = {};
 
+void(*ChaoConstructor_CWE)();
+
+static void ChaoConstructor_Level()
+{
+	if (ChaoConstructor_CWE)
+	{
+		ChaoConstructor_CWE();
+	}
+	else
+	{
+		LoadTextureList((char*)"AL_MINI_PARTS_TEX", (NJS_TEXLIST*)0x1366AE4);
+	}
+
+	LoadTextureList((char*)"AL_BODY", (NJS_TEXLIST*)0x13669FC);
+	LoadTextureList((char*)"AL_jewel", (NJS_TEXLIST*)0x1366AD4);
+	LoadTextureList((char*)"AL_ICON", (NJS_TEXLIST*)0x1366ACC);
+	LoadTextureList((char*)"AL_EYE", (NJS_TEXLIST*)0x1366AC4);
+	LoadTextureList((char*)"AL_MOUTH", (NJS_TEXLIST*)0x1366ADC);
+	LoadTextureList((char*)"AL_COMMON_TEX", (NJS_TEXLIST*)0x1366AB4);
+	LoadTextureList((char*)"AL_TEX_COMMON", (NJS_TEXLIST*)0x1366ABC);
+	LoadChaoPalette();
+}
+
 static void SetChaoPowerups(int id, ChaoData* chaodata)
 {
 	if (ChaoPowerups == true) {
@@ -72,15 +95,7 @@ static void LoadLevelInit_r()
 		}
 		else
 		{
-			LoadTextureList((char*)"AL_MINI_PARTS_TEX", (NJS_TEXLIST*)0x1366AE4);
-			LoadTextureList((char*)"AL_BODY", (NJS_TEXLIST*)0x13669FC);
-			LoadTextureList((char*)"AL_jewel", (NJS_TEXLIST*)0x1366AD4);
-			LoadTextureList((char*)"AL_ICON", (NJS_TEXLIST*)0x1366ACC);
-			LoadTextureList((char*)"AL_EYE", (NJS_TEXLIST*)0x1366AC4);
-			LoadTextureList((char*)"AL_MOUTH", (NJS_TEXLIST*)0x1366ADC);
-			LoadTextureList((char*)"AL_COMMON_TEX", (NJS_TEXLIST*)0x1366AB4);
-			LoadTextureList((char*)"AL_TEX_COMMON", (NJS_TEXLIST*)0x1366ABC);
-			LoadChaoPalette();
+			ChaoConstructor_Level();
 		}
 	}
 }
@@ -178,6 +193,13 @@ extern "C"
 		CarriedChao[0].data->data.Type = ChaoType_Child;
 		CarriedChao[0].mode = ChaoLeashMode_Fly;
 		#endif
+
+		// Compatibility with Chao World Extended
+		auto cwe = GetModuleHandle(L"CWE");
+		if (cwe != nullptr)
+		{
+			ChaoConstructor_CWE = (void(*)())GetProcAddress(cwe, "ChaoMain_Constructor_Hook");
+		}
 	}
 
 	__declspec(dllexport) ModInfo SA2ModInfo = { ModLoaderVer };
