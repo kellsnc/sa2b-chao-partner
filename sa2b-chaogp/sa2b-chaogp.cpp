@@ -175,7 +175,7 @@ extern "C"
 
 		#ifndef NDEBUG
 		CarriedChao[0].data = new ChaoData();
-		CarriedChao[0].data->data.Type == ChaoType_Child;
+		CarriedChao[0].data->data.Type = ChaoType_Child;
 		CarriedChao[0].mode = ChaoLeashMode_Fly;
 		#endif
 	}
