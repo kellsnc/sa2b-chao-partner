@@ -24,6 +24,7 @@ enum StatusChao : __int16 {
 };
 
 struct CustomData {
+	NJS_POINT3 pre;
 	EntityData1* target;
 	uint16_t noAutoAttackTimer;
 	uint16_t noAttackTimer;

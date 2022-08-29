@@ -28,14 +28,14 @@ DataArray(TargetEntityStruct, TargetEntitiesP2, 0x1DE5100, 257);
 DataArray(TargetEntityStruct, TargetRingEntitiesP1, 0x1DE8C40, 913);
 DataArray(TargetEntityStruct, TargetRingEntitiesP2, 0x1DE46C0, 913);
 
-void LookAt(NJS_VECTOR* from, NJS_VECTOR* to, Angle* outx, Angle* outy);
-float GetDistance(NJS_VECTOR* orig, NJS_VECTOR* dest);
-NJS_VECTOR GetPointToFollow(NJS_VECTOR* pos, NJS_VECTOR* dir, Rotation* rot);
-void MoveForward(EntityData1* entity, float speed);
-void PutBehindPlayer(NJS_VECTOR* pos, EntityData1* data, float dist);
+NJS_POINT3 LerpPosition(NJS_POINT3* from, NJS_POINT3* to, Float spd);
+Angle GetYawAngleToPoint(NJS_POINT3* from, NJS_POINT3* to);
+float GetDistance(NJS_POINT3* orig, NJS_POINT3* dest);
+NJS_POINT3 GetPointToFollow(NJS_POINT3* pos, NJS_POINT3* dir, Rotation* rot);
+void PutBehindPlayer(NJS_POINT3* pos, EntityData1* data, Float dist);
 
-EntityData1* GetClosestAttack(NJS_VECTOR* pos, Float range, int playerid);
-EntityData1* GetClosestRing(NJS_VECTOR* pos, Float range, int playerid);
+EntityData1* GetClosestAttack(NJS_POINT3* pos, Float range, int playerid);
+EntityData1* GetClosestRing(NJS_POINT3* pos, Float range, int playerid);
 
 static const void* const sub_53CAC0Ptr = (void*)0x53CAC0;
 static inline void sub_53CAC0(ObjectMaster* a1)
@@ -45,4 +45,34 @@ static inline void sub_53CAC0(ObjectMaster* a1)
 		mov eax, [a1]
 		call sub_53CAC0Ptr
 	}
+}
+
+static const void* const AdjustAnglePtr = (void*)0x446960;
+static inline Angle AdjustAngle(Angle ang0, Angle ang1, Angle dang)
+{
+	Angle result;
+	__asm
+	{
+		mov edx, [dang]
+		mov eax, [ang1]
+		mov ecx, [ang0]
+		call AdjustAnglePtr
+		mov result, eax
+	}
+	return result;
+}
+
+static const void* const DiffAnglePtr = (void*)0x4469C0;
+static inline Angle DiffAngle(Angle ang0, Angle ang1)
+{
+	Angle result;
+	__asm
+	{
+		push[ang0]
+		mov eax, [ang1]
+		call AdjustAnglePtr
+		mov result, eax
+		add esp, 4
+	}
+	return result;
 }

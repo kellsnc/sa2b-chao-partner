@@ -1,40 +1,29 @@
 #include "stdafx.h"
 
-void LookAt(NJS_VECTOR* from, NJS_VECTOR* to, Angle* outx, Angle* outy)
+NJS_POINT3 LerpPosition(NJS_POINT3* from, NJS_POINT3* to, Float spd)
 {
-	NJS_VECTOR unit = *to;
-
-	unit.x -= from->x;
-	unit.y -= from->y;
-	unit.z -= from->z;
-
-	if (outy)
-	{
-		*outy = static_cast<Angle>(atan2f(unit.x, unit.z) * 65536.0f * 0.1591549762031479f);
-	}
-
-	if (outx)
-	{
-		if (from->y == to->y)
-		{
-			*outx = 0;
-		}
-		else
-		{
-			Float len = 1.0f / sqrtf(unit.z * unit.z + unit.x * unit.x + unit.y * unit.y);
-
-			*outx = static_cast<Angle>((acos(len * 3.3499999f) * 65536.0f * 0.1591549762031479f)
-				- (acos(-(len * unit.y)) * 65536.0f * 0.1591549762031479f));
-		}
-	}
+	NJS_POINT3 out;
+	out.x = from->x + (to->x - from->x) * spd;
+	out.y = from->y + (to->y - from->y) * spd;
+	out.z = from->z + (to->z - from->z) * spd;
+	return out;
 }
 
-float GetDistance(NJS_VECTOR* orig, NJS_VECTOR* dest)
+Angle GetYawAngleToPoint(NJS_POINT3* from, NJS_POINT3* to)
+{
+	NJS_POINT3 unit;
+	unit.x = to->x - from->x;
+	unit.y = to->y - from->y;
+	unit.z = to->z - from->z;
+	return njArcTan2(unit.x, unit.z);
+}
+
+float GetDistance(NJS_POINT3* orig, NJS_POINT3* dest)
 {
 	return sqrtf(powf(dest->x - orig->x, 2) + powf(dest->y - orig->y, 2) + powf(dest->z - orig->z, 2));
 }
 
-void njGetTranslation(NJS_MATRIX_PTR m, NJS_VECTOR* pos)
+void njGetTranslation(NJS_MATRIX_PTR m, NJS_POINT3* pos)
 {
 	if (!m)
 	{
@@ -46,9 +35,9 @@ void njGetTranslation(NJS_MATRIX_PTR m, NJS_VECTOR* pos)
 	pos->z = m[M23];
 }
 
-NJS_VECTOR GetPointToFollow(NJS_VECTOR* pos, NJS_VECTOR* dir, Rotation* rot)
+NJS_POINT3 GetPointToFollow(NJS_POINT3* pos, NJS_POINT3* dir, Rotation* rot)
 {
-	NJS_VECTOR point;
+	NJS_POINT3 point;
 	njPushUnitMatrix();
 	njTranslateEx(pos);
 	njRotateZ(_nj_current_matrix_ptr_, rot->z);
@@ -61,18 +50,7 @@ NJS_VECTOR GetPointToFollow(NJS_VECTOR* pos, NJS_VECTOR* dir, Rotation* rot)
 	return point;
 }
 
-void MoveForward(EntityData1* entity, float speed)
-{
-	njPushUnitMatrix();
-	njTranslateEx(&entity->Position);
-	njRotateY(_nj_current_matrix_ptr_, entity->Rotation.y);
-	njRotateX(_nj_current_matrix_ptr_, entity->Rotation.x);
-	njTranslate(_nj_current_matrix_ptr_, 0.0f, 0.0f, speed);
-	njGetTranslation(_nj_current_matrix_ptr_, &entity->Position);
-	njPopMatrix(1u);
-}
-
-void PutBehindPlayer(NJS_VECTOR* pos, EntityData1* data, float dist)
+void PutBehindPlayer(NJS_POINT3* pos, EntityData1* data, Float dist)
 {
 	if (data)
 	{
@@ -85,7 +63,7 @@ void PutBehindPlayer(NJS_VECTOR* pos, EntityData1* data, float dist)
 	}
 }
 
-EntityData1* GetClosestAttack(NJS_VECTOR* pos, Float range, int playerid)
+EntityData1* GetClosestAttack(NJS_POINT3* pos, Float range, int playerid)
 {
 	EntityData1* entityReturn = nullptr;
 	Float distanceMin = range;
@@ -109,10 +87,10 @@ EntityData1* GetClosestAttack(NJS_VECTOR* pos, Float range, int playerid)
 	return entityReturn;
 }
 
-EntityData1* GetClosestRing(NJS_VECTOR* pos, Float range, int playerid)
+EntityData1* GetClosestRing(NJS_POINT3* pos, Float range, int playerid)
 {
 	EntityData1* entityReturn = nullptr;
-	Float distanceMin = 10000000;
+	Float distanceMin = range;
 
 	uint16_t count = playerid != 1 ? TargetRingEntitiesP1_Count : TargetRingEntitiesP2_Count;
 	TargetEntityStruct* entitiesArray = playerid != 1 ? TargetRingEntitiesP1 : TargetRingEntitiesP2;
@@ -128,11 +106,5 @@ EntityData1* GetClosestRing(NJS_VECTOR* pos, Float range, int playerid)
 		}
 	}
 
-	if (distanceMin < range)
-	{
-		return entityReturn;
-	}
-	else {
-		return nullptr;
-	}
+	return entityReturn;
 }

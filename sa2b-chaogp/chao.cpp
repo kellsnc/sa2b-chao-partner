@@ -1,18 +1,19 @@
 #include "stdafx.h"
+#include "SA2ModLoader.h"
+#include "common.h"
+#include "utils.h"
 
 Buttons ChaoAttackButton = Buttons_Z;
 
-static void Chao_MoveToTarget(ChaoData1* data1, NJS_VECTOR* targetPos, float speed)
+static void Chao_MoveToTarget(ChaoData1* data1, NJS_POINT3* targetPos, Float speed)
 {
-	speed = (fabsf(GetDistance(&data1->entity.Position, targetPos)) / 10) * speed;
-	LookAt(&data1->entity.Position, targetPos, &data1->entity.Rotation.x, &data1->entity.Rotation.y);
-	MoveForward(&data1->entity, speed);
-	data1->entity.Rotation.x = 0;
+	data1->entity.Position = LerpPosition(&data1->entity.Position, targetPos, speed);
+	data1->entity.Rotation.y = GetYawAngleToPoint(&data1->entity.Position, targetPos);
 }
 
 static float Chao_GetFlightSpeed(ChaoDataBase* database)
 {
-	return 1.0f + (static_cast<float>(min(database->StatLevels[ChaoStat_Fly], 99)) / 200.0f);
+	return 0.1f + (min((float)(database->StatLevels[ChaoStat_Fly]), 100.0f) / 500.0f);
 }
 
 static float Chao_GetAttackRange(ChaoDataBase* database)
@@ -54,9 +55,9 @@ static void Chao_CheckAttack(ChaoData1* data1, ChaoLeash* leash, EntityData1* pl
 	}
 }
 
-static NJS_VECTOR GetPlayerPoint(EntityData1* player, CharObj2Base* co2)
+static NJS_POINT3 GetFollowPoint(EntityData1* player, CharObj2Base* co2)
 {
-	NJS_VECTOR dir = { -6, 7, 5 };
+	NJS_POINT3 dir = { -6, 7, 5 };
 
 	if (co2->CharID == Characters_Eggman)
 	{
@@ -87,7 +88,7 @@ static void ChaoAttack(ChaoData1* data1, EntityData1* player, CharObj2Base* co2,
 
 static void FollowPlayer(ChaoData1* data1, EntityData1* player, CharObj2Base* co2)
 {
-	NJS_VECTOR dest = GetPlayerPoint(player, co2);
+	NJS_POINT3 dest = GetFollowPoint(player, co2);
 
 	Chao_MoveToTarget(data1, &dest, Chao_GetFlightSpeed(data1->ChaoDataBase_ptr));
 
@@ -97,20 +98,23 @@ static void FollowPlayer(ChaoData1* data1, EntityData1* player, CharObj2Base* co
 	}
 }
 
-static void IdlePlayer(ChaoData1* data1, EntityData1* player, CharObj2Base* co2)
+static void IdlePlayer(ChaoData1* data1, EntityData1* player, CharObj2Base* co2, CustomData* custom)
 {
-	NJS_VECTOR dest = GetPlayerPoint(player, co2);
+	NJS_POINT3 dest = GetFollowPoint(player, co2);
 
-	float dist = GetDistance(&data1->entity.Position, &dest);
-
-	if ((dist > 11.0f && njScalor(&co2->Speed) > 0.2f) || dist > 100.0f)
+	if (GetDistance(&custom->pre, &dest) > 3.0f)
 	{
 		data1->entity.NextAction = ChaoAct_FollowPlayer;
 	}
 
-	data1->entity.Rotation.y += 0x200;
-	data1->entity.Rotation.x = 0;
-	MoveForward(&data1->entity, 0.1f);
+	data1->entity.Rotation.y += 0x100;
+
+	dest.x = custom->pre.x - njCos(-data1->entity.Rotation.y) * 1.0f;
+	dest.y = custom->pre.y;
+	dest.z = custom->pre.z - njSin(-data1->entity.Rotation.y) * 1.0f;
+
+	data1->entity.Position = LerpPosition(&data1->entity.Position, &dest, 0.1f);
+	
 }
 
 bool CheckFlyButton(int playerid)
@@ -124,15 +128,16 @@ static void LevelChao_Fly(ObjectMaster* obj, ChaoData1* data1, ChaoLeash* leash,
 	case ChaoAct_FollowPlayer:
 		FollowPlayer(data1, player, co2);
 		Chao_CheckAttack(data1, leash, player, co2);
-
+		leash->custom.pre = data1->entity.Position;
 		break;
 	case ChaoAct_IdlePlayer:
-		IdlePlayer(data1, player, co2);
+		IdlePlayer(data1, player, co2, &leash->custom);
 		Chao_CheckAttack(data1, leash, player, co2);
 
 		break;
 	case ChaoAct_Attack:
 		ChaoAttack(data1, player, co2, &leash->custom);
+		leash->custom.pre = data1->entity.Position;
 		break;
 	}
 
@@ -176,6 +181,8 @@ static void LevelChao_Normal(ObjectMaster* obj, ChaoData1* data1, ChaoLeash* lea
 	}
 
 	Chao_RunPhysics(obj);
+
+	leash->custom.pre = data1->entity.Position;
 }
 
 static void LevelChao_UpdateStuff(CustomData* custom)
