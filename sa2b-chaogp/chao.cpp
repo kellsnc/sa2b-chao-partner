@@ -2,12 +2,6 @@
 
 Buttons ChaoAttackButton = Buttons_Z;
 
-enum CustomChaoActs {
-	ChaoAct_FollowPlayer,
-	ChaoAct_IdlePlayer,
-	ChaoAct_Attack
-};
-
 static void Chao_MoveToTarget(ChaoData1* data1, NJS_VECTOR* targetPos, float speed)
 {
 	speed = (fabsf(GetDistance(&data1->entity.Position, targetPos)) / 10) * speed;
@@ -56,7 +50,7 @@ static void Chao_CheckAttack(ChaoData1* data1, ChaoLeash* leash, EntityData1* pl
 	if (target && Chao_AttackCondition(data1->ChaoDataBase_ptr, &leash->custom, co2->PlayerNum))
 	{
 		data1->entity.NextAction = ChaoAct_Attack;
-		leash->custom.targetPos = target->Position;
+		leash->custom.target = target;
 	}
 }
 
@@ -76,11 +70,14 @@ static NJS_VECTOR GetPlayerPoint(EntityData1* player, CharObj2Base* co2)
 	return GetPointToFollow(&player->Position, &dir, &player->Rotation);
 }
 
-static void ChaoAttack(ChaoData1* data1, EntityData1* player, CustomData* custom)
+static void ChaoAttack(ChaoData1* data1, EntityData1* player, CharObj2Base* co2, CustomData* custom)
 {
-	if (GetDistance(&data1->entity.Position, &custom->targetPos) > 3.0f && GetDistance(&data1->entity.Position, &player->Position) < Chao_GetAttackRange(data1->ChaoDataBase_ptr))
+	auto target = GetClosestAttack(&data1->entity.Position, Chao_GetAttackRange(data1->ChaoDataBase_ptr), co2->PlayerNum);
+	auto dist = GetDistance(&data1->entity.Position, &player->Position);
+
+	if (target == custom->target && dist < Chao_GetAttackRange(data1->ChaoDataBase_ptr))
 	{
-		Chao_MoveToTarget(data1, &custom->targetPos, Chao_GetFlightSpeed(data1->ChaoDataBase_ptr));
+		Chao_MoveToTarget(data1, &target->Position, Chao_GetFlightSpeed(data1->ChaoDataBase_ptr));
 	}
 	else
 	{
@@ -135,14 +132,14 @@ static void LevelChao_Fly(ObjectMaster* obj, ChaoData1* data1, ChaoLeash* leash,
 
 		break;
 	case ChaoAct_Attack:
-		ChaoAttack(data1, player, &leash->custom);
+		ChaoAttack(data1, player, co2, &leash->custom);
 		break;
 	}
 
 	// Flying animation
 	if (FrameCountIngame % 30 == 0)
 	{
-		Chao_Animation(&data1->MotionTable, 286); // or 130, 286
+		Chao_Animation(&data1->MotionTable, 286); // or 130
 	}
 
 	Chao_PlayAnimation(obj);
@@ -206,7 +203,8 @@ void __cdecl Chao_Main_r(ObjectMaster* obj)
 		ChaoLeash* leash = &CarriedChao[data1->entity.field_2];
 
 		// If the player cannot be found, act as a normal Chao
-		if (player == nullptr) {
+		if (player == nullptr)
+		{
 			TARGET_STATIC(Chao_Main)(obj);
 			return;
 		}
@@ -225,7 +223,8 @@ void __cdecl Chao_Main_r(ObjectMaster* obj)
 
 		++data1->gap_30;
 
-		if (!(data1->entity.Status & StatusChao_Held)) {
+		if (!(data1->entity.Status & StatusChao_Held))
+		{
 			if ((data1->Flags & 8) != 0)
 			{
 				AddToCollisionList(obj);
@@ -236,7 +235,8 @@ void __cdecl Chao_Main_r(ObjectMaster* obj)
 			}
 		}
 	}
-	else {
+	else
+	{
 		TARGET_STATIC(Chao_Main)(obj);
 	}
 }

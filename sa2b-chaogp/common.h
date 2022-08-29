@@ -3,6 +3,12 @@
 #define TARGET_DYNAMIC(name) ((decltype(name##_r)*)name##_t->Target())
 #define TARGET_STATIC(name) ((decltype(name##_r)*)name##_t.Target())
 
+enum CustomChaoActs {
+	ChaoAct_FollowPlayer,
+	ChaoAct_IdlePlayer,
+	ChaoAct_Attack
+};
+
 enum ChaoLeashModes {
 	ChaoLeashMode_Disabled,
 	ChaoLeashMode_Free,
@@ -18,7 +24,7 @@ enum StatusChao : __int16 {
 };
 
 struct CustomData {
-	NJS_VECTOR targetPos;
+	EntityData1* target;
 	uint16_t noAutoAttackTimer;
 	uint16_t noAttackTimer;
 };

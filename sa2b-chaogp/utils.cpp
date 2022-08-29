@@ -88,7 +88,7 @@ void PutBehindPlayer(NJS_VECTOR* pos, EntityData1* data, float dist)
 EntityData1* GetClosestAttack(NJS_VECTOR* pos, Float range, int playerid)
 {
 	EntityData1* entityReturn = nullptr;
-	Float distanceMin = 10000000;
+	Float distanceMin = range;
 
 	uint16_t count = playerid != 1 ? TargetEntitiesP1_Count : TargetEntitiesP2_Count;
 	TargetEntityStruct* entitiesArray = playerid != 1 ? TargetEntitiesP1 : TargetEntitiesP2;
@@ -97,20 +97,16 @@ EntityData1* GetClosestAttack(NJS_VECTOR* pos, Float range, int playerid)
 	{
 		TargetEntityStruct* current = &entitiesArray[i];
 
-		if (current->entity && current->distance < distanceMin)
+		Float dist = GetDistance(pos, &current->entity->Position);
+
+		if (current->entity && dist < distanceMin)
 		{
-			distanceMin = current->distance;
+			distanceMin = dist;
 			entityReturn = current->entity;
 		}
 	}
 
-	if (distanceMin < range)
-	{
-		return entityReturn;
-	}
-	else {
-		return nullptr;
-	}
+	return entityReturn;
 }
 
 EntityData1* GetClosestRing(NJS_VECTOR* pos, Float range, int playerid)
