@@ -68,6 +68,7 @@ DataArray(TargetEntityStruct, TargetEntitiesP2, 0x1DE5100, 257);
 DataArray(TargetEntityStruct, TargetRingEntitiesP1, 0x1DE8C40, 913);
 DataArray(TargetEntityStruct, TargetRingEntitiesP2, 0x1DE46C0, 913);
 
+FunctionPointer(void, CreateItemBoxSmoke, (NJS_POINT3* pos, NJS_POINT3* spd, Float scl), 0x6EBE50);
 FunctionPointer(void, GetActiveCollisions, (float x, float y, float z, float s), 0x47CD60);
 DataPointer(uint16_t, ActiveColCount, 0x1DE9484);
 

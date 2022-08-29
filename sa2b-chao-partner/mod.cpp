@@ -9,6 +9,8 @@ FunctionHook<void> LoadLevelInit_hook(0x43CB10);
 FunctionHook<void> LoadLevelManager_hook(0x43CB50);
 FunctionHook<void> LoadLevelDestroy_hook(0x454CC0);
 FunctionHook<BYTE*, int> ChangeChaoStage_hook(0x52B5B0);
+FunctionHook<void, ObjectMaster*> ItemBoxAirExec_hook(0x6C8EF0);
+UsercallFuncVoid(ItemBoxCollision_hook, (ObjectMaster* obj), (obj), 0x6C8090, rEDI);
 UsercallFunc(BOOL, EnemyCheckDamage_hook, (EntityData1* data, EnemyData* edata), (data, edata), 0x47AA70, rEAX, rEAX, stack4);
 
 static bool ChaoPowerups = false;
@@ -196,20 +198,100 @@ static BYTE* __cdecl ChangeChaoStage_r(int area) {
 	return ChangeChaoStage_hook.Original(area);
 }
 
-BOOL EnemyCheckDamage_r(EntityData1* data, EnemyData* edata)
+bool CheckCollisionWithChao(EntityData1* data, int* pnum)
 {
-	if (data->Collision->CollidingObject && data->Collision->CollidingObject->Object &&
+	if (data && data->Collision &&
+		data->Collision->CollidingObject && data->Collision->CollidingObject->Object &&
 		data->Collision->CollidingObject->Object->MainSub == Chao_Main)
 	{
 		auto chao_data = data->Collision->CollidingObject->Object->Data1.Chao;
-		
+
 		if (chao_data && chao_data->entity.NextAction == ChaoAct_Attack)
 		{
-			return TRUE;
+			if (pnum) *pnum = chao_data->entity.Index;
+			return true;
 		}
 	}
 
+	return false;
+}
+
+BOOL EnemyCheckDamage_r(EntityData1* data, EnemyData* edata)
+{
+	if (CheckCollisionWithChao(data, nullptr))
+	{
+		edata->flag |= 0x1000u;
+		edata->buyoscale = *(Float*)0xA3D28C;
+		return true;
+	}
+
 	return EnemyCheckDamage_hook.Original(data, edata);
+}
+
+void ItemBoxCollision_r(ObjectMaster* obj)
+{
+	int pnum;
+	if (CheckCollisionWithChao(obj->Data1.Entity, &pnum))
+	{
+		auto data = obj->Data1.Entity;
+		DisplayItemBoxItem(pnum, ItemBox_Items[(int)obj->UnknownA_ptr].Texture);
+		ItemBox_Items[(int)obj->UnknownA_ptr].Code(obj, pnum);
+		data->Status |= 0x4;
+		data->Action = 3;
+
+		NJS_POINT3 pos = { data->Position.x, data->Position.y + 7.5f, data->Position.z };
+		NJS_POINT3 spd = { 0.0f, 0.1f, 0.0f };
+		CreateItemBoxSmoke(&pos, &spd, 6.0f);
+
+		PlaySoundProbably(32781, 0, 0, 0);
+
+		if (obj->SETData)
+		{
+			obj->SETData->Flags |= 0x4;
+		}
+		
+		if (data->NextAction && obj->Parent && obj->Parent->SETData)
+		{
+			obj->Parent->SETData->Flags |= 0x4;
+		}
+	}
+
+	ItemBoxCollision_hook.Original(obj);
+}
+
+void ItemBoxAirExec_r(ObjectMaster* obj)
+{
+	auto data = obj->Data1.Entity;
+
+	if (data->Action == 2)
+	{
+		int pnum;
+		if (CheckCollisionWithChao(obj->Data1.Entity, &pnum))
+		{
+
+			DisplayItemBoxItem(pnum, ItemBox_Items[data->Index].Texture);
+			ItemBox_Items[data->Index].Code(obj, pnum);
+			data->Status |= 0x4;
+			data->Action = 3;
+
+			NJS_POINT3 spd = { 0.0f, 0.1f, 0.0f };
+			CreateItemBoxSmoke(&data->Position, &spd, 6.0f);
+
+			PlaySoundProbably(32781, 0, 0, 0);
+
+			if (obj->SETData)
+			{
+				obj->SETData->Flags |= 0x4;
+			}
+
+			if (data->NextAction && obj->Parent && obj->Parent->SETData)
+			{
+				obj->Parent->SETData->Flags |= 0x4;
+			}
+		}
+	}
+	
+	ItemBoxAirExec_hook.Original(obj);
 }
 
 extern "C"
@@ -227,6 +309,8 @@ extern "C"
 		LoadLevelDestroy_hook.Hook(LoadLevelDestroy_r);
 		ChangeChaoStage_hook.Hook(ChangeChaoStage_r);
 		EnemyCheckDamage_hook.Hook(EnemyCheckDamage_r);
+		ItemBoxCollision_hook.Hook(ItemBoxCollision_r);
+		ItemBoxAirExec_hook.Hook(ItemBoxAirExec_r);
 
 		#ifndef NDEBUG
 		CarriedChao[0].data = new ChaoData();
