@@ -4,10 +4,9 @@
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <exception>
 
 #include "SA2ModLoader.h"
-#include "Trampoline.h"
+#include "FunctionHook.h"
+#include "UsercallFunctionHandler.h"
 #include "IniFile.hpp"
-
-#include "utils.h"
-#include "common.h"

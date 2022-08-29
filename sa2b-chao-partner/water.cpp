@@ -1,6 +1,9 @@
 #include "stdafx.h"
+#include "SA2ModLoader.h"
+#include "FunctionHook.h"
+#include "common.h"
 
-float GetWaterHeight(ChaoData1* chaodata1)
+static float GetWaterHeight(ChaoData1* chaodata1)
 {
     NJS_VECTOR pos = { chaodata1->entity.Position.x, chaodata1->entity.Position.y - 2.0f, chaodata1->entity.Position.z };
     CharSurfaceInfo surfaceinfo;
@@ -19,14 +22,14 @@ float GetWaterHeight(ChaoData1* chaodata1)
 }
 
 BOOL __cdecl Chao_DetectWater_r(ObjectMaster* obj);
-Trampoline Chao_DetectWater_t(0x561630, 0x561635, Chao_DetectWater_r);
+FunctionHook<BOOL, ObjectMaster*> Chao_DetectWater_hook(0x561630, Chao_DetectWater_r);
 BOOL __cdecl Chao_DetectWater_r(ObjectMaster* obj)
 {
     ChaoData1* data1 = (ChaoData1*)obj->Data1.Chao;
 
     if (CurrentLevel == LevelIDs_ChaoWorld)
     {
-        return ((decltype(Chao_DetectWater_r)*)Chao_DetectWater_t.Target())(obj);
+        return  Chao_DetectWater_hook.Original(obj);
     }
     else
     {

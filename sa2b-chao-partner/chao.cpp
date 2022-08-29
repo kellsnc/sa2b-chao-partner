@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "SA2ModLoader.h"
+#include "FunctionHook.h"
 #include "common.h"
 #include "utils.h"
 
@@ -195,7 +196,7 @@ static void LevelChao_UpdateStuff(CustomData* custom)
 }
 
 void __cdecl Chao_Main_r(ObjectMaster* obj);
-Trampoline Chao_Main_t((int)Chao_Main, (int)Chao_Main + 0x8, Chao_Main_r);
+FunctionHook<void, ObjectMaster*> Chao_Main_hook(0x54FE20, Chao_Main_r);
 void __cdecl Chao_Main_r(ObjectMaster* obj)
 {
 	ChaoData1* data1 = obj->Data1.Chao;
@@ -215,7 +216,7 @@ void __cdecl Chao_Main_r(ObjectMaster* obj)
 		// If the player cannot be found, act as a normal Chao
 		if (player == nullptr)
 		{
-			TARGET_STATIC(Chao_Main)(obj);
+			Chao_Main_hook.Original(obj);
 			return;
 		}
 
@@ -246,6 +247,6 @@ void __cdecl Chao_Main_r(ObjectMaster* obj)
 	}
 	else
 	{
-		TARGET_STATIC(Chao_Main)(obj);
+		Chao_Main_hook.Original(obj);
 	}
 }

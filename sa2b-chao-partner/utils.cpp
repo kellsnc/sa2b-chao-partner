@@ -1,4 +1,6 @@
 #include "stdafx.h"
+#include "SA2ModLoader.h"
+#include "common.h"
 
 NJS_POINT3 LerpPosition(NJS_POINT3* from, NJS_POINT3* to, Float spd)
 {

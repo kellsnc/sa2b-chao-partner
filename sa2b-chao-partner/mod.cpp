@@ -15,7 +15,7 @@ static bool ChaoPowerups = false;
 bool ChaoAssist = false;
 //bool ChaoLuck = true;
 
-ChaoLeash CarriedChao[2] = {};
+ChaoLeash CarriedChao[8] = {};
 
 static void(*ChaoConstructor_CWE)();
 
