@@ -155,7 +155,7 @@ static void LevelChao_Fly(ObjectMaster* obj, ChaoData1* data1, ChaoLeash* leash,
 	Chao_MoveEmotionBall(obj);
 	Chao_RunPhysics(obj);
 
-	if (CheckFlyButton(data1->entity.field_2))
+	if (CheckFlyButton(data1->entity.Index))
 	{
 		data1->entity.Status &= ~StatusChao_FlyPlayer;
 		leash->mode = ChaoLeashMode_Free;
@@ -176,7 +176,7 @@ static void LevelChao_Normal(ObjectMaster* obj, ChaoData1* data1, ChaoLeash* lea
 		Chao_RunGravity(obj);
 		leash->mode = ChaoLeashMode_Free;
 
-		if (CheckFlyButton(data1->entity.field_2))
+		if (CheckFlyButton(data1->entity.Index))
 		{
 			data1->entity.Status |= StatusChao_FlyPlayer;
 			leash->mode = ChaoLeashMode_Fly;
@@ -207,10 +207,10 @@ void __cdecl Chao_Main_r(ObjectMaster* obj)
 			sub_53CAC0(obj);
 		}
 
-		EntityData1* player = MainCharObj1[data1->entity.field_2];
-		EntityData2* pmotion = (EntityData2*)MainCharacter[data1->entity.field_2]->EntityData2;
-		CharObj2Base* co2 = MainCharObj2[data1->entity.field_2];
-		ChaoLeash* leash = &CarriedChao[data1->entity.field_2];
+		EntityData1* player = MainCharObj1[data1->entity.Index];
+		EntityData2* pmotion = (EntityData2*)MainCharacter[data1->entity.Index]->EntityData2;
+		CharObj2Base* co2 = MainCharObj2[data1->entity.Index];
+		ChaoLeash* leash = &CarriedChao[data1->entity.Index];
 
 		// If the player cannot be found, act as a normal Chao
 		if (player == nullptr)

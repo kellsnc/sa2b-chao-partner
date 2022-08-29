@@ -74,7 +74,7 @@ static void LoadChaoLevel(int id)
 	}
 
 	auto chao = CreateChao(CarriedChao[id].data, 0, 0, &pos, 0);
-	chao->Data1.Chao->entity.field_2 = id;
+	chao->Data1.Chao->entity.Index = id;
 	SetChaoPowerups(id, CarriedChao[id].data);
 
 	if (CarriedChao[id].mode == ChaoLeashMode_Fly)
