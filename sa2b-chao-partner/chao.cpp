@@ -224,25 +224,24 @@ void __cdecl Chao_Main_r(ObjectMaster* obj)
 		// Run custom actions
 		if (!(data1->entity.Status & StatusChao_FlyPlayer))
 		{
+			data1->entity.Status |= 0x40;
 			LevelChao_Normal(obj, data1, leash);
 		}
 		else
 		{
+			data1->entity.Status &= ~0x40;
 			LevelChao_Fly(obj, data1, leash, player, co2);
 		}
 
 		++data1->gap_30;
 
-		if (!(data1->entity.Status & StatusChao_Held))
+		if ((data1->Flags & 8) != 0)
 		{
-			if ((data1->Flags & 8) != 0)
-			{
-				AddToCollisionList(obj);
-			}
-			else
-			{
-				Collision_InitThings(obj);
-			}
+			AddToCollisionList(obj);
+		}
+		else
+		{
+			Collision_InitThings(obj);
 		}
 	}
 	else
