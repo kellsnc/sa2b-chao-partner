@@ -110,3 +110,25 @@ EntityData1* GetClosestRing(NJS_POINT3* pos, Float range, int playerid)
 
 	return entityReturn;
 }
+
+NJS_POINT3 GetEntityCenter(EntityData1* data)
+{
+	NJS_POINT3 pos = data->Position;
+
+	if (data->Collision)
+	{
+		auto& info = data->Collision->CollisionArray[0];
+		if (info.attr & 0x800000)
+		{
+			pos = info.center;
+		}
+		else
+		{
+			pos.x += info.center.x;
+			pos.y += info.center.y;
+			pos.z += info.center.z;
+		}
+	}
+
+	return pos;
+}

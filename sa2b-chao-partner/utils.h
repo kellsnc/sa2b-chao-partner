@@ -8,3 +8,4 @@ void PutBehindPlayer(NJS_POINT3* pos, EntityData1* data, Float dist);
 
 EntityData1* GetClosestAttack(NJS_POINT3* pos, Float range, int playerid);
 EntityData1* GetClosestRing(NJS_POINT3* pos, Float range, int playerid);
+NJS_POINT3 GetEntityCenter(EntityData1* data);

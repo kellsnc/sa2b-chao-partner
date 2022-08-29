@@ -82,7 +82,8 @@ static void ChaoAttack(ChaoData1* data1, EntityData1* player, CharObj2Base* co2,
 
 	if (target == custom->target && dist < Chao_GetAttackRange(data1->ChaoDataBase_ptr))
 	{
-		Chao_MoveToTarget(data1, &target->Position, Chao_GetFlightSpeed(data1->ChaoDataBase_ptr));
+		auto target_pos = GetEntityCenter(target);
+		Chao_MoveToTarget(data1, &target_pos, Chao_GetFlightSpeed(data1->ChaoDataBase_ptr));
 	}
 	else
 	{
