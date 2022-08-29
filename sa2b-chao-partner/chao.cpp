@@ -71,6 +71,14 @@ static NJS_POINT3 GetFollowPoint(EntityData1* player, CharObj2Base* co2)
 	{
 		dir = { -8, 16, 11 };
 	}
+	else if (co2->CharID == Characters_Knuckles || co2->CharID == Characters_Rouge)
+	{
+		if (player->Action == Action_Climb || player->Action == Action_DigOnWall ||
+			player->Action == Action_DigFailOnWall || player->Action == Action_DigFinishOnWall)
+		{
+			dir = { 2.0f, 11.0f, 4.0f };
+		}
+	}
 
 	return GetPointToFollow(&player->Position, &dir, &player->Rotation);
 }
@@ -119,7 +127,6 @@ static void IdlePlayer(ChaoData1* data1, EntityData1* player, CharObj2Base* co2,
 	dest.z = custom->pre.z - njSin(-data1->entity.Rotation.y) * 1.0f;
 
 	data1->entity.Position = LerpPosition(&data1->entity.Position, &dest, 0.1f);
-	
 }
 
 bool CheckFlyButton(int playerid)
