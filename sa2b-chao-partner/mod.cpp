@@ -12,8 +12,8 @@ FunctionHook<BYTE*, int> ChangeChaoStage_hook(0x52B5B0);
 UsercallFunc(BOOL, EnemyCheckDamage_hook, (EntityData1* data, EnemyData* edata), (data, edata), 0x47AA70, rEAX, rEAX, stack4);
 
 static bool ChaoPowerups = false;
-bool ChaoAssist = true;
-bool ChaoLuck = true;
+bool ChaoAssist = false;
+//bool ChaoLuck = true;
 
 ChaoLeash CarriedChao[2] = {};
 
@@ -218,8 +218,8 @@ extern "C"
 	{
 		const IniFile* config = new IniFile(std::string(path) + "\\config.ini");
 		ChaoPowerups = config->getBool("Functionalities", "EnablePowerups", false);
-		ChaoAssist = config->getBool("Functionalities", "EnableChaoAssist", true);
-		ChaoLuck = config->getBool("Functionalities", "EnableChaoLuck", true);
+		ChaoAssist = config->getBool("Functionalities", "EnableChaoAssist", false);
+		//ChaoLuck = config->getBool("Functionalities", "EnableChaoLuck", true);
 		delete config;
 
 		LoadLevelInit_hook.Hook(LoadLevelInit_r);

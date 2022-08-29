@@ -46,12 +46,15 @@ static bool Chao_AttackCondition(ChaoDataBase* database, CustomData* custom, int
 
 static void Chao_CheckAttack(ChaoData1* data1, ChaoLeash* leash, EntityData1* player, CharObj2Base* co2)
 {
-	EntityData1* target = GetClosestAttack(&data1->entity.Position, Chao_GetAttackRange(data1->ChaoDataBase_ptr), co2->PlayerNum);
-
-	if (target && Chao_AttackCondition(data1->ChaoDataBase_ptr, &leash->custom, co2->PlayerNum))
+	if (ChaoAssist)
 	{
-		data1->entity.NextAction = ChaoAct_Attack;
-		leash->custom.target = target;
+		auto target = GetClosestAttack(&data1->entity.Position, Chao_GetAttackRange(data1->ChaoDataBase_ptr), co2->PlayerNum);
+
+		if (target && Chao_AttackCondition(data1->ChaoDataBase_ptr, &leash->custom, co2->PlayerNum))
+		{
+			data1->entity.NextAction = ChaoAct_Attack;
+			leash->custom.target = target;
+		}
 	}
 }
 
