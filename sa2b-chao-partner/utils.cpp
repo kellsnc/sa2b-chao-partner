@@ -118,7 +118,7 @@ NJS_POINT3 GetEntityCenter(EntityData1* data)
 	if (data->Collision)
 	{
 		auto& info = data->Collision->CollisionArray[0];
-		if (info.attr & 0x800000)
+		if (info.attr & 0x20)
 		{
 			pos = info.center;
 		}
