@@ -10,7 +10,7 @@
 FunctionHook<void> LoadLevelInit_hook(0x43CB10);
 FunctionHook<void> LoadLevelManager_hook(0x43CB50);
 FunctionHook<void> LoadLevelDestroy_hook(0x454CC0);
-FunctionHook<BYTE*, int> ChangeChaoStage_hook(0x52B5B0);
+FunctionHook<void, int> ChangeChaoStage_hook(0x52B5B0);
 FunctionHook<void, ObjectMaster*> ItemBoxAirExec_hook(0x6C8EF0);
 UsercallFuncVoid(ItemBoxCollision_hook, (ObjectMaster* obj), (obj), 0x6C8090, rEDI);
 UsercallFunc(BOOL, EnemyCheckDamage_hook, (EntityData1* data, EnemyData* edata), (data, edata), 0x47AA70, rEAX, rEAX, stack4);
@@ -160,7 +160,8 @@ static void LoadLevelDestroy_r()
 }
 
 // Select the chao when leaving a garden
-static BYTE* __cdecl ChangeChaoStage_r(int area) {
+static void __cdecl ChangeChaoStage_r(int area)
+{
 	if (area == 7)
 	{
 		for (int i = 0; i < 2; ++i)
@@ -177,19 +178,19 @@ static BYTE* __cdecl ChangeChaoStage_r(int area) {
 				continue;
 			}
 
-			ChaoData1* data = pwp->HeldObject->Data1.Chao;
+			CHAOWK* data = (CHAOWK*)pwp->HeldObject->Data1.Chao;
 
-			if (!data || !data->ChaoDataBase_ptr)
+			if (!data || !data->pParamGC)
 			{
 				continue;
 			}
 
 			// Loop through the chao slots to get if it's a valid chao
-			for (uint8_t j = 0; j < 24; ++j)
+			for (int j = 0; j < 24; ++j)
 			{
-				if (&ChaoSlots[j].data == data->ChaoDataBase_ptr)
+				if (&ChaoSlots[j].data == (ChaoDataBase*)data->pParamGC)
 				{
-					if (data->ChaoDataBase_ptr->Type != ChaoType_Empty && data->ChaoDataBase_ptr->Type != ChaoType_Egg)
+					if (data->pParamGC->type != eCHAO_TYPE::Empty && data->pParamGC->type != eCHAO_TYPE::Egg)
 					{
 						CarriedChao[i].mode = ChaoLeashMode_Fly;
 						CarriedChao[i].data = new ChaoData;
@@ -200,7 +201,7 @@ static BYTE* __cdecl ChangeChaoStage_r(int area) {
 		}
 	}
 
-	return ChangeChaoStage_hook.Original(area);
+	ChangeChaoStage_hook.Original(area);
 }
 
 bool CheckCollisionWithChao(EntityData1* data, int* pnum)
@@ -209,7 +210,7 @@ bool CheckCollisionWithChao(EntityData1* data, int* pnum)
 		data->Collision->CollidingObject && data->Collision->CollidingObject->Object &&
 		data->Collision->CollidingObject->Object->MainSub == Chao_Main)
 	{
-		auto chao_data = data->Collision->CollidingObject->Object->Data1.Chao;
+		auto chao_data = (CHAOWK*)data->Collision->CollidingObject->Object->Data1.Chao;
 
 		if (chao_data && chao_data->entity.NextAction == ChaoAct_Attack)
 		{

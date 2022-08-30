@@ -31,14 +31,14 @@ BOOL __cdecl AL_CheckWater_r(ObjectMaster* obj)
     }
     else
     {
-        CHAOWK* chaowp = (CHAOWK*)obj->Data1.Chao;
-        ChaoData2* data2 = (ChaoData2*)obj->EntityData2;
+        auto chaowp = (CHAOWK*)obj->Data1.Chao;
+        auto movewp = (MOVE_WORK*)obj->EntityData2;
 
         if (chaowp->entity.Status >= 0)
         {
-            data2->WaterHeight = GetWaterHeight(&chaowp->entity.Position);
+            movewp->WaterY = GetWaterHeight(&chaowp->entity.Position);
 
-            if (chaowp->entity.Position.y + 2.0f >= data2->WaterHeight)
+            if (chaowp->entity.Position.y + 2.0f >= movewp->WaterY)
             {
                 chaowp->Behavior.Flag &= ~(0x4 | 0x1);
                 return FALSE;
@@ -52,9 +52,9 @@ BOOL __cdecl AL_CheckWater_r(ObjectMaster* obj)
                     AL_SetBehaviorWithTimer(obj, ALBHV_Swim, -1);
                 }
 
-                if (data2->float4 < 0.0f)
+                if (movewp->Velo.y < 0.0f)
                 {
-                    data2->float4 *= 0.1f;
+                    movewp->Velo.y *= 0.1f;
                 }
 
                 chaowp->Behavior.Flag |= 0x4;

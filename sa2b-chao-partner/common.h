@@ -104,6 +104,50 @@ struct TargetEntityStruct {
 	float distance;
 };
 
+struct XYZ_SHADOW_WORK
+{
+	NJS_POINT3 pos;
+	xssunit hit[6];
+	xssunit pre_hit[6];
+};
+
+struct MOVE_WORK
+{
+	NJS_POINT3 Velo;
+	NJS_POINT3 Acc;
+	Angle3 AimAng;
+	Angle3 RotSpd;
+	float rad;
+	float height;
+	float weight;
+	char gap[4];
+	unsigned __int16 Flag;
+	unsigned __int16 Timer;
+	float Spd;
+	float Gravity;
+	int ViewAngle;
+	float ViewRange;
+	NJS_POINT3 AimPos;
+	NJS_POINT3 PrePos;
+	NJS_POINT3 HomePos;
+	Angle3 HomeAng;
+	Angle3 Phase;
+	NJS_LINE FrontWall;
+	NJS_POINT3 Offset;
+	float Top;
+	float Side;
+	float Bottom;
+	float CliffHeight;
+	float BoundSide;
+	float BoundFloor;
+	float BoundCeiling;
+	float BoundFriction;
+	float TopY;
+	float BottomY;
+	float WaterY;
+	XYZ_SHADOW_WORK Shadow;
+};
+
 extern bool ChaoAssist;
 extern bool ChaoLuck;
 extern ChaoLeash CarriedChao[8];
