@@ -67,7 +67,8 @@ void PutBehindPlayer(NJS_POINT3* pos, EntityData1* data, Float dist)
 
 bool IsAnEnemy(ObjectMaster* obj)
 {
-	return obj && obj->EntityData2 && obj->MainSub != (ObjectFuncPtr)SpringA_Main && obj->MainSub != SpringB_Main;
+	return obj && obj->EntityData2 && obj->MainSub != (ObjectFuncPtr)SpringA_Main && obj->MainSub != SpringB_Main &&
+		obj->MainSub != (ObjectFuncPtr)0x6D9400 && obj->MainSub != (ObjectFuncPtr)0x5BA480;
 }
 
 EntityData1* GetClosestAttack(NJS_POINT3* pos, Float range, int playerid)
@@ -84,7 +85,7 @@ EntityData1* GetClosestAttack(NJS_POINT3* pos, Float range, int playerid)
 
 		Float dist = GetDistance(pos, &current->entity->Position);
 
-		if (current->entity && current->entity->Collision && IsAnEnemy(current->entity->Collision->Object) && dist < distanceMin)
+		if (current->entity && current->entity->Collision && dist < distanceMin && IsAnEnemy(current->entity->Collision->Object))
 		{
 			distanceMin = dist;
 			entityReturn = current->entity;
