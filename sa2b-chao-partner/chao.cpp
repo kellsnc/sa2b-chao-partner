@@ -33,7 +33,7 @@ static bool Chao_AttackCondition(CHAOWK* chaowp, CustomData* custom, int playeri
 
 	if (custom->noAutoAttackTimer == 0 && rand() % 200 < max(20, param->emotion.Mood[EM_MD_PLEASURE]))
 	{
-		custom->noAutoAttackTimer = 60 + param->emotion.IllState[EM_ILL_COLD] + param->emotion.State[EM_ST_HUNGER] + param->emotion.State[EM_ST_SLEEP_DEPTH] + param->emotion.Mood[EM_MD_FEAR] + param->emotion.Mood[EM_MD_PAIN];
+		custom->noAutoAttackTimer = 60 + std::abs(min(0, param->emotion.IllState[EM_ILL_COLD])) + param->emotion.State[EM_ST_HUNGER] + param->emotion.State[EM_ST_SLEEP_DEPTH] + param->emotion.Mood[EM_MD_FEAR] + param->emotion.Mood[EM_MD_PAIN];
 		return true;
 	}
 
@@ -44,7 +44,7 @@ static bool Chao_AttackCondition(CHAOWK* chaowp, CustomData* custom, int playeri
 			return false;
 		}
 
-		custom->noAutoAttackTimer = 120 + param->emotion.IllState[EM_ILL_COLD] + param->emotion.State[EM_ST_HUNGER] + param->emotion.State[EM_ST_SLEEP_DEPTH] + param->emotion.Mood[EM_MD_FEAR] + param->emotion.Mood[EM_MD_PAIN];
+		custom->noAutoAttackTimer = 120 + std::abs(min(0, param->emotion.IllState[EM_ILL_COLD])) + param->emotion.State[EM_ST_HUNGER] + param->emotion.State[EM_ST_SLEEP_DEPTH] + param->emotion.Mood[EM_MD_FEAR] + param->emotion.Mood[EM_MD_PAIN];
 
 		return true;
 	}
