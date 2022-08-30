@@ -215,6 +215,8 @@ void __cdecl Chao_Main_r(ObjectMaster* obj)
 
 	if (CurrentLevel != LevelIDs::LevelIDs_ChaoWorld)
 	{
+		SoundsPaused = TRUE;
+
 		if (data1->gap_30 <= 2u)
 		{
 			sub_53CAC0(obj);
@@ -256,6 +258,8 @@ void __cdecl Chao_Main_r(ObjectMaster* obj)
 		{
 			Collision_InitThings(obj);
 		}
+
+		SoundsPaused = FALSE;
 	}
 	else
 	{
