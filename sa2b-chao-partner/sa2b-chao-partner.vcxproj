@@ -90,6 +90,7 @@
     <ClInclude Include="utils.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="water.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="chao.cpp" />

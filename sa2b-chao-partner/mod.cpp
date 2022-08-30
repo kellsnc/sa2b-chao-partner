@@ -5,6 +5,7 @@
 #include "common.h"
 #include "utils.h"
 #include "chao.h"
+#include "water.h"
 
 FunctionHook<void> LoadLevelInit_hook(0x43CB10);
 FunctionHook<void> LoadLevelManager_hook(0x43CB50);
@@ -332,6 +333,9 @@ extern "C"
 		ItemBoxCollision_hook.Hook(ItemBoxCollision_r);
 		ItemBoxAirExec_hook.Hook(ItemBoxAirExec_r);
 		GetWayPointPos_hook.Hook(GetWayPointPos_r);
+
+		Chao_Init();
+		PatchWaterDetection();
 
 		#ifndef NDEBUG
 		CarriedChao[0].data = new ChaoData();

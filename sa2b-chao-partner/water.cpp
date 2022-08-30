@@ -2,6 +2,9 @@
 #include "SA2ModLoader.h"
 #include "FunctionHook.h"
 #include "common.h"
+#include "water.h"
+
+FunctionHook<BOOL, ObjectMaster*> Chao_DetectWater_hook(0x561630);
 
 static float GetWaterHeight(ChaoData1* chaodata1)
 {
@@ -21,8 +24,6 @@ static float GetWaterHeight(ChaoData1* chaodata1)
     }
 }
 
-BOOL __cdecl Chao_DetectWater_r(ObjectMaster* obj);
-FunctionHook<BOOL, ObjectMaster*> Chao_DetectWater_hook(0x561630, Chao_DetectWater_r);
 BOOL __cdecl Chao_DetectWater_r(ObjectMaster* obj)
 {
     ChaoData1* data1 = (ChaoData1*)obj->Data1.Chao;
@@ -69,4 +70,9 @@ BOOL __cdecl Chao_DetectWater_r(ObjectMaster* obj)
             return FALSE;
         }
     }
+}
+
+void PatchWaterDetection()
+{
+    Chao_DetectWater_hook.Hook(Chao_DetectWater_r);
 }

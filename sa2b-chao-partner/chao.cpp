@@ -5,6 +5,8 @@
 #include "utils.h"
 #include "chao.h"
 
+FunctionHook<void, ObjectMaster*> Chao_Main_hook(0x54FE20);
+
 Buttons ChaoAttackButton = Buttons_Z;
 
 ChaoData1* CurrentChaoData = nullptr;
@@ -206,8 +208,6 @@ static void LevelChao_UpdateStuff(CustomData* custom)
 	if (custom->noAutoAttackTimer > 0) custom->noAutoAttackTimer -= 1;
 }
 
-void __cdecl Chao_Main_r(ObjectMaster* obj);
-FunctionHook<void, ObjectMaster*> Chao_Main_hook(0x54FE20, Chao_Main_r);
 void __cdecl Chao_Main_r(ObjectMaster* obj)
 {
 	ChaoData1* data1 = obj->Data1.Chao;
@@ -261,4 +261,9 @@ void __cdecl Chao_Main_r(ObjectMaster* obj)
 	{
 		Chao_Main_hook.Original(obj);
 	}
+}
+
+void Chao_Init()
+{
+	Chao_Main_hook.Hook(Chao_Main_r);
 }
