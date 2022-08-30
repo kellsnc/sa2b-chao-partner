@@ -168,6 +168,7 @@ static void LevelChao_Fly(ObjectMaster* obj, CHAOWK* chaowp, ChaoLeash* leash, E
 
 	AL_MotionControl(obj);
 	AL_IconControl(obj);
+	AL_FaceControl(obj);
 	AL_ShapeControl(obj);
 	AL_DetectCollision(obj);
 
