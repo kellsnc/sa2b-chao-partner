@@ -56,6 +56,9 @@ extern bool ChaoAssist;
 extern bool ChaoLuck;
 extern ChaoLeash CarriedChao[8];
 
+DataPointer(ObjectMaster*, ALWControlTask, 0x1A0F94C);
+VoidFunc(LoadALWControl, 0x530B80);
+VoidFunc(InitWaypoints, 0x534EF0);
 VoidFunc(LoadChaoPalette, 0x534350);
 
 DataPointer(uint16_t, TargetEntitiesP1_Count, 0x1DE46B8);

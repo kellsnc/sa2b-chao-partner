@@ -3,8 +3,11 @@
 #include "FunctionHook.h"
 #include "common.h"
 #include "utils.h"
+#include "chao.h"
 
 Buttons ChaoAttackButton = Buttons_Z;
+
+ChaoData1* CurrentChaoData = nullptr;
 
 static void Chao_MoveToTarget(ChaoData1* data1, NJS_POINT3* targetPos, Float speed)
 {
@@ -208,6 +211,7 @@ FunctionHook<void, ObjectMaster*> Chao_Main_hook(0x54FE20, Chao_Main_r);
 void __cdecl Chao_Main_r(ObjectMaster* obj)
 {
 	ChaoData1* data1 = obj->Data1.Chao;
+	CurrentChaoData = data1;
 
 	if (CurrentLevel != LevelIDs::LevelIDs_ChaoWorld)
 	{

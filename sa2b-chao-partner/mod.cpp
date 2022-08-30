@@ -4,6 +4,7 @@
 #include "UsercallFunctionHandler.h"
 #include "common.h"
 #include "utils.h"
+#include "chao.h"
 
 FunctionHook<void> LoadLevelInit_hook(0x43CB10);
 FunctionHook<void> LoadLevelManager_hook(0x43CB50);
@@ -12,6 +13,7 @@ FunctionHook<BYTE*, int> ChangeChaoStage_hook(0x52B5B0);
 FunctionHook<void, ObjectMaster*> ItemBoxAirExec_hook(0x6C8EF0);
 UsercallFuncVoid(ItemBoxCollision_hook, (ObjectMaster* obj), (obj), 0x6C8090, rEDI);
 UsercallFunc(BOOL, EnemyCheckDamage_hook, (EntityData1* data, EnemyData* edata), (data, edata), 0x47AA70, rEAX, rEAX, stack4);
+UsercallFunc(BOOL, GetWayPointPos_hook, (void* buf, NJS_POINT3* pos, int num), (buf, pos, num), 0x534F80, rEAX, rEAX, rEDI, stack4);
 
 static bool ChaoPowerups = false;
 bool ChaoAssist = false;
@@ -57,15 +59,17 @@ static void SetChaoPowerups(int id, ChaoData* chaodata)
 	}
 }
 
-VoidFunc(sub_530B80, 0x530B80);
-DataPointer(void*, dword_1A0F94C, 0x1A0F94C);
-
 static void LoadChaoLevel(int id)
 {
-	if (!dword_1A0F94C)
+	if (!ALWControlTask)
 	{
-		sub_530B80();
+		LoadALWControl();
 	}
+
+	// Fake waypoints so that GetWayPointPos runs
+	if (!*(int*)0x1A1693C) *(int*)0x1A1693C = 1;
+	if (!*(int*)0x1A1D958) *(int*)0x1A1D958 = 1;
+	if (!*(int*)0x1A1E95C) *(int*)0x1A1E95C = 1;
 
 	auto player = MainCharObj1[id];
 	NJS_VECTOR pos = { 0.0f, 0.0f, 0.0f };
@@ -268,7 +272,6 @@ void ItemBoxAirExec_r(ObjectMaster* obj)
 		int pnum;
 		if (CheckCollisionWithChao(obj->Data1.Entity, &pnum))
 		{
-
 			DisplayItemBoxItem(pnum, ItemBox_Items[data->Index].Texture);
 			ItemBox_Items[data->Index].Code(obj, pnum);
 			data->Status |= 0x4;
@@ -294,6 +297,23 @@ void ItemBoxAirExec_r(ObjectMaster* obj)
 	ItemBoxAirExec_hook.Original(obj);
 }
 
+BOOL __cdecl GetWayPointPos_r(void* buf, NJS_POINT3* pos, int num)
+{
+	if (CurrentLevel == LevelIDs_ChaoWorld || CurrentChaoData == nullptr)
+	{
+		return GetWayPointPos_hook.Original(buf, pos, num);
+	}
+	else
+	{
+		*pos = MainCharObj1[CurrentChaoData->entity.Index]->Position;
+
+		pos->x += njCos(rand() % 0x10000) * (njRandom() * 100.0f);
+		pos->z += njSin(rand() % 0x10000) * (njRandom() * 100.0f);
+
+		return TRUE;
+	}
+}
+
 extern "C"
 {
 	__declspec(dllexport) void Init(const char* path, const HelperFunctions& helperFunctions)
@@ -311,6 +331,7 @@ extern "C"
 		EnemyCheckDamage_hook.Hook(EnemyCheckDamage_r);
 		ItemBoxCollision_hook.Hook(ItemBoxCollision_r);
 		ItemBoxAirExec_hook.Hook(ItemBoxAirExec_r);
+		GetWayPointPos_hook.Hook(GetWayPointPos_r);
 
 		#ifndef NDEBUG
 		CarriedChao[0].data = new ChaoData();
