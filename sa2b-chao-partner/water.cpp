@@ -4,15 +4,14 @@
 #include "common.h"
 #include "water.h"
 
-FunctionHook<BOOL, ObjectMaster*> Chao_DetectWater_hook(0x561630);
+FunctionHook<BOOL, ObjectMaster*> AL_CheckWater_hook(0x561630);
 
-static float GetWaterHeight(ChaoData1* chaodata1)
+static float GetWaterHeight(NJS_POINT3* pos)
 {
-    NJS_VECTOR pos = { chaodata1->entity.Position.x, chaodata1->entity.Position.y - 2.0f, chaodata1->entity.Position.z };
     CharSurfaceInfo surfaceinfo;
 
-    GetActiveCollisions(pos.x, pos.y, pos.z, 200.0f);
-    GetCharacterSurfaceInfo(&pos, &surfaceinfo);
+    GetActiveCollisions(pos->x, pos->y, pos->z, 200.0f);
+    GetCharacterSurfaceInfo(pos, &surfaceinfo);
 
     if (surfaceinfo.TopSurface & SurfaceFlag_Water)
     {
@@ -24,35 +23,33 @@ static float GetWaterHeight(ChaoData1* chaodata1)
     }
 }
 
-BOOL __cdecl Chao_DetectWater_r(ObjectMaster* obj)
+BOOL __cdecl AL_CheckWater_r(ObjectMaster* obj)
 {
-    ChaoData1* data1 = (ChaoData1*)obj->Data1.Chao;
-
     if (CurrentLevel == LevelIDs_ChaoWorld)
     {
-        return  Chao_DetectWater_hook.Original(obj);
+        return AL_CheckWater_hook.Original(obj);
     }
     else
     {
-        ChaoData1* data = obj->Data1.Chao;
+        CHAOWK* chaowp = (CHAOWK*)obj->Data1.Chao;
         ChaoData2* data2 = (ChaoData2*)obj->EntityData2;
 
-        if (data->entity.Status >= 0)
+        if (chaowp->entity.Status >= 0)
         {
-            data2->WaterHeight = GetWaterHeight(data);
+            data2->WaterHeight = GetWaterHeight(&chaowp->entity.Position);
 
-            if (data->entity.Position.y + 2.0f >= data2->WaterHeight)
+            if (chaowp->entity.Position.y + 2.0f >= data2->WaterHeight)
             {
-                data->ChaoBehaviourInfo.CurrentActionInfo.field_0 &= 0xFFFAu;
+                chaowp->Behavior.Flag &= ~(0x4 | 0x1);
                 return FALSE;
             }
             else
             {
-                if (!(data->ChaoBehaviourInfo.CurrentActionInfo.field_0 & 1))
+                if (!(chaowp->Behavior.Flag & 1))
                 {
-                    data->ChaoBehaviourInfo.CurrentActionInfo.field_0 = data->ChaoBehaviourInfo.CurrentActionInfo.field_0 | 1;
-                    SE_CallV2(0x1020, &obj->Data1.Entity->Position, 0, 0, 0);
-                    RunChaoBehaviour(obj, (void*)0x562330, -1);
+                    chaowp->Behavior.Flag |= 0x1;
+                    dsPlay_iloop(0x1020, &obj->Data1.Entity->Position, 0, 0, 0);
+                    AL_SetBehaviorWithTimer(obj, ALBHV_Swim, -1);
                 }
 
                 if (data2->float4 < 0.0f)
@@ -60,13 +57,13 @@ BOOL __cdecl Chao_DetectWater_r(ObjectMaster* obj)
                     data2->float4 *= 0.1f;
                 }
 
-                data->ChaoBehaviourInfo.CurrentActionInfo.field_0 |= 4u;
+                chaowp->Behavior.Flag |= 0x4;
                 return TRUE;
             }
         }
         else
         {
-            data->ChaoBehaviourInfo.CurrentActionInfo.field_0 &= 0xFFFEu;
+            chaowp->Behavior.Flag &= ~0x1;
             return FALSE;
         }
     }
@@ -74,5 +71,5 @@ BOOL __cdecl Chao_DetectWater_r(ObjectMaster* obj)
 
 void PatchWaterDetection()
 {
-    Chao_DetectWater_hook.Hook(Chao_DetectWater_r);
+    AL_CheckWater_hook.Hook(AL_CheckWater_r);
 }

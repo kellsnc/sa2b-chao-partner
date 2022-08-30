@@ -9,40 +9,42 @@ FunctionHook<void, ObjectMaster*> Chao_Main_hook(0x54FE20);
 
 Buttons ChaoAttackButton = Buttons_Z;
 
-ChaoData1* CurrentChaoData = nullptr;
+CHAOWK* CurrentChaoData = nullptr;
 
-static void Chao_MoveToTarget(ChaoData1* data1, NJS_POINT3* targetPos, Float speed)
+static void Chao_MoveToTarget(CHAOWK* chaowp, NJS_POINT3* targetPos, Float speed)
 {
-	data1->entity.Position = LerpPosition(&data1->entity.Position, targetPos, speed);
-	data1->entity.Rotation.y = GetYawAngleToPoint(&data1->entity.Position, targetPos);
+	chaowp->entity.Position = LerpPosition(&chaowp->entity.Position, targetPos, speed);
+	chaowp->entity.Rotation.y = GetYawAngleToPoint(&chaowp->entity.Position, targetPos);
 }
 
-static float Chao_GetFlightSpeed(ChaoDataBase* database)
+static float Chao_GetFlightSpeed(CHAOWK* chaowp)
 {
-	return 0.1f + (min((float)(database->StatLevels[ChaoStat_Fly]), 100.0f) / 500.0f);
+	return 0.1f + (min((float)(chaowp->pParamGC->Lev[ChaoStat_Fly]), 100.0f) / 500.0f);
 }
 
-static float Chao_GetAttackRange(ChaoDataBase* database)
+static float Chao_GetAttackRange(CHAOWK* chaowp)
 {
-	return max(0, max(200.0f, min(500.0f, database->StatLevels[ChaoStat_Stamina] * 7)) - (database->Emotion.Tiredness / 2));
+	return max(0, max(200.0f, min(500.0f, chaowp->pParamGC->Lev[ChaoStat_Stamina] * 7)) - (chaowp->pParamGC->emotion.State[EM_ST_SLEEP_DEPTH] / 2));
 }
 
-static bool Chao_AttackCondition(ChaoDataBase* database, CustomData* custom, int playerid)
+static bool Chao_AttackCondition(CHAOWK* chaowp, CustomData* custom, int playerid)
 {
-	if (custom->noAutoAttackTimer == 0 && rand() % 200 < max(20, database->Happiness))
+	auto param = chaowp->pParamGC;
+
+	if (custom->noAutoAttackTimer == 0 && rand() % 200 < max(20, param->emotion.Mood[EM_MD_PLEASURE]))
 	{
-		custom->noAutoAttackTimer = 60 + database->Emotion.ColdLevel + database->Emotion.Hunger + database->Emotion.Tiredness + database->Emotion.Anger;
+		custom->noAutoAttackTimer = 60 + param->emotion.IllState[EM_ILL_COLD] + param->emotion.State[EM_ST_HUNGER] + param->emotion.State[EM_ST_SLEEP_DEPTH] + param->emotion.Mood[EM_MD_FEAR] + param->emotion.Mood[EM_MD_PAIN];
 		return true;
 	}
 
 	if (custom->noAttackTimer == 0 && Controllers[playerid].press & ChaoAttackButton)
 	{
-		if (database->Emotion.Sleepiness > 200 && rand() % 3 == 0)
+		if (param->emotion.State[EM_ST_SLEEP_DEPTH] > 200 && rand() % 3 == 0)
 		{
 			return false;
 		}
 
-		custom->noAttackTimer = 120 + database->Emotion.ColdLevel + database->Emotion.Hunger + database->Emotion.Tiredness + database->Emotion.Anger;
+		custom->noAutoAttackTimer = 120 + param->emotion.IllState[EM_ILL_COLD] + param->emotion.State[EM_ST_HUNGER] + param->emotion.State[EM_ST_SLEEP_DEPTH] + param->emotion.Mood[EM_MD_FEAR] + param->emotion.Mood[EM_MD_PAIN];
 
 		return true;
 	}
@@ -50,15 +52,15 @@ static bool Chao_AttackCondition(ChaoDataBase* database, CustomData* custom, int
 	return false;
 }
 
-static void Chao_CheckAttack(ChaoData1* data1, ChaoLeash* leash, EntityData1* player, CharObj2Base* co2)
+static void Chao_CheckAttack(CHAOWK* chaowp, ChaoLeash* leash, EntityData1* player, CharObj2Base* co2)
 {
 	if (ChaoAssist)
 	{
-		auto target = GetClosestAttack(&data1->entity.Position, Chao_GetAttackRange(data1->ChaoDataBase_ptr), co2->PlayerNum);
+		auto target = GetClosestAttack(&chaowp->entity.Position, Chao_GetAttackRange(chaowp), co2->PlayerNum);
 
-		if (target && Chao_AttackCondition(data1->ChaoDataBase_ptr, &leash->custom, co2->PlayerNum))
+		if (target && Chao_AttackCondition(chaowp, &leash->custom, co2->PlayerNum))
 		{
-			data1->entity.NextAction = ChaoAct_Attack;
+			chaowp->entity.NextAction = ChaoAct_Attack;
 			leash->custom.target = target;
 		}
 	}
@@ -88,50 +90,50 @@ static NJS_POINT3 GetFollowPoint(EntityData1* player, CharObj2Base* co2)
 	return GetPointToFollow(&player->Position, &dir, &player->Rotation);
 }
 
-static void ChaoAttack(ChaoData1* data1, EntityData1* player, CharObj2Base* co2, CustomData* custom)
+static void ChaoAttack(CHAOWK* chaowp, EntityData1* player, CharObj2Base* co2, CustomData* custom)
 {
-	auto target = GetClosestAttack(&data1->entity.Position, Chao_GetAttackRange(data1->ChaoDataBase_ptr), co2->PlayerNum);
-	auto dist = GetDistance(&data1->entity.Position, &player->Position);
+	auto target = GetClosestAttack(&chaowp->entity.Position, Chao_GetAttackRange(chaowp), co2->PlayerNum);
+	auto dist = GetDistance(&chaowp->entity.Position, &player->Position);
 
-	if (target == custom->target && dist < Chao_GetAttackRange(data1->ChaoDataBase_ptr))
+	if (target == custom->target && dist < Chao_GetAttackRange(chaowp))
 	{
 		auto target_pos = GetEntityCenter(target);
-		Chao_MoveToTarget(data1, &target_pos, Chao_GetFlightSpeed(data1->ChaoDataBase_ptr));
+		Chao_MoveToTarget(chaowp, &target_pos, Chao_GetFlightSpeed(chaowp));
 	}
 	else
 	{
-		data1->entity.NextAction = ChaoAct_FollowPlayer;
+		chaowp->entity.NextAction = ChaoAct_FollowPlayer;
 	}
 }
 
-static void FollowPlayer(ChaoData1* data1, EntityData1* player, CharObj2Base* co2)
+static void FollowPlayer(CHAOWK* chaowp, EntityData1* player, CharObj2Base* co2)
 {
 	NJS_POINT3 dest = GetFollowPoint(player, co2);
 
-	Chao_MoveToTarget(data1, &dest, Chao_GetFlightSpeed(data1->ChaoDataBase_ptr));
+	Chao_MoveToTarget(chaowp, &dest, Chao_GetFlightSpeed(chaowp));
 
-	if (njScalor(&co2->Speed) == 0 && GetDistance(&data1->entity.Position, &dest) < 5.0f)
+	if (njScalor(&co2->Speed) == 0 && GetDistance(&chaowp->entity.Position, &dest) < 5.0f)
 	{
-		data1->entity.NextAction = ChaoAct_IdlePlayer;
+		chaowp->entity.NextAction = ChaoAct_IdlePlayer;
 	}
 }
 
-static void IdlePlayer(ChaoData1* data1, EntityData1* player, CharObj2Base* co2, CustomData* custom)
+static void IdlePlayer(CHAOWK* chaowp, EntityData1* player, CharObj2Base* co2, CustomData* custom)
 {
 	NJS_POINT3 dest = GetFollowPoint(player, co2);
 
 	if (GetDistance(&custom->pre, &dest) > 3.0f)
 	{
-		data1->entity.NextAction = ChaoAct_FollowPlayer;
+		chaowp->entity.NextAction = ChaoAct_FollowPlayer;
 	}
 
-	data1->entity.Rotation.y += 0x100;
+	chaowp->entity.Rotation.y += 0x100;
 
-	dest.x = custom->pre.x - njCos(-data1->entity.Rotation.y) * 1.0f;
+	dest.x = custom->pre.x - njCos(-chaowp->entity.Rotation.y) * 1.0f;
 	dest.y = custom->pre.y;
-	dest.z = custom->pre.z - njSin(-data1->entity.Rotation.y) * 1.0f;
+	dest.z = custom->pre.z - njSin(-chaowp->entity.Rotation.y) * 1.0f;
 
-	data1->entity.Position = LerpPosition(&data1->entity.Position, &dest, 0.1f);
+	chaowp->entity.Position = LerpPosition(&chaowp->entity.Position, &dest, 0.1f);
 }
 
 bool CheckFlyButton(int playerid)
@@ -139,67 +141,67 @@ bool CheckFlyButton(int playerid)
 	return Controllers[playerid].press & Buttons_L && Controllers[playerid].press & Buttons_R;
 }
 
-static void LevelChao_Fly(ObjectMaster* obj, ChaoData1* data1, ChaoLeash* leash, EntityData1* player, CharObj2Base* co2)
+static void LevelChao_Fly(ObjectMaster* obj, CHAOWK* chaowp, ChaoLeash* leash, EntityData1* player, CharObj2Base* co2)
 {
-	switch (data1->entity.NextAction) {
+	switch (chaowp->entity.NextAction) {
 	case ChaoAct_FollowPlayer:
-		FollowPlayer(data1, player, co2);
-		Chao_CheckAttack(data1, leash, player, co2);
-		leash->custom.pre = data1->entity.Position;
+		FollowPlayer(chaowp, player, co2);
+		Chao_CheckAttack(chaowp, leash, player, co2);
+		leash->custom.pre = chaowp->entity.Position;
 		break;
 	case ChaoAct_IdlePlayer:
-		IdlePlayer(data1, player, co2, &leash->custom);
-		Chao_CheckAttack(data1, leash, player, co2);
+		IdlePlayer(chaowp, player, co2, &leash->custom);
+		Chao_CheckAttack(chaowp, leash, player, co2);
 
 		break;
 	case ChaoAct_Attack:
-		ChaoAttack(data1, player, co2, &leash->custom);
-		leash->custom.pre = data1->entity.Position;
+		ChaoAttack(chaowp, player, co2, &leash->custom);
+		leash->custom.pre = chaowp->entity.Position;
 		break;
 	}
 
 	// Flying animation
 	if (FrameCountIngame % 30 == 0)
 	{
-		Chao_Animation(&data1->MotionTable, 286); // or 130
+		AL_SetMotionLink(obj, 286); // or 130
 	}
 
-	Chao_PlayAnimation(obj);
-	Chao_RunEmotionBall(obj);
-	Chao_MoveEmotionBall(obj);
-	Chao_RunPhysics(obj);
+	AL_MotionControl(obj);
+	AL_IconControl(obj);
+	AL_ShapeControl(obj);
+	AL_DetectCollision(obj);
 
-	if (CheckFlyButton(data1->entity.Index))
+	if (CheckFlyButton(chaowp->entity.Index))
 	{
-		data1->entity.Status &= ~StatusChao_FlyPlayer;
+		chaowp->entity.Status &= ~StatusChao_FlyPlayer;
 		leash->mode = ChaoLeashMode_Free;
 	}
 }
 
-static void LevelChao_Normal(ObjectMaster* obj, ChaoData1* data1, ChaoLeash* leash)
+static void LevelChao_Normal(ObjectMaster* obj, CHAOWK* chaowp, ChaoLeash* leash)
 {
-	Chao_RunMovements(obj);
-	Chao_PlayAnimation(obj);
-	Chao_RunEmotionBall(obj);
-	Chao_RunActions(obj);
-	Chao_MoveEmotionBall(obj);
+	AL_BehaviorControl(obj);
+	AL_MotionControl(obj);
+	AL_IconControl(obj);
+	AL_FaceControl(obj);
+	AL_ShapeControl(obj);
 
 	// Fly if Y is pressed
-	if (!(data1->entity.Status & StatusChao_Held))
+	if (!(chaowp->entity.Status & StatusChao_Held))
 	{
-		Chao_RunGravity(obj);
+		AL_MOV_Control(obj);
 		leash->mode = ChaoLeashMode_Free;
 
-		if (CheckFlyButton(data1->entity.Index))
+		if (CheckFlyButton(chaowp->entity.Index))
 		{
-			data1->entity.Status |= StatusChao_FlyPlayer;
+			chaowp->entity.Status |= StatusChao_FlyPlayer;
 			leash->mode = ChaoLeashMode_Fly;
 		}
 	}
+	
+	AL_DetectCollision(obj);
 
-	Chao_RunPhysics(obj);
-
-	leash->custom.pre = data1->entity.Position;
+	leash->custom.pre = chaowp->entity.Position;
 }
 
 static void LevelChao_UpdateStuff(CustomData* custom)
@@ -210,22 +212,22 @@ static void LevelChao_UpdateStuff(CustomData* custom)
 
 void __cdecl Chao_Main_r(ObjectMaster* obj)
 {
-	ChaoData1* data1 = obj->Data1.Chao;
-	CurrentChaoData = data1;
+	CHAOWK* chaowp = (CHAOWK*)obj->Data1.Chao;
+	CurrentChaoData = chaowp;
 
 	if (CurrentLevel != LevelIDs::LevelIDs_ChaoWorld)
 	{
 		SoundsPaused = TRUE;
 
-		if (data1->gap_30 <= 2u)
+		if (chaowp->Timer <= 2u)
 		{
-			sub_53CAC0(obj);
+			AL_IconResetPos(obj);
 		}
 
-		EntityData1* player = MainCharObj1[data1->entity.Index];
-		EntityData2* pmotion = (EntityData2*)MainCharacter[data1->entity.Index]->EntityData2;
-		CharObj2Base* co2 = MainCharObj2[data1->entity.Index];
-		ChaoLeash* leash = &CarriedChao[data1->entity.Index];
+		EntityData1* player = MainCharObj1[chaowp->entity.Index];
+		EntityData2* pmotion = (EntityData2*)MainCharacter[chaowp->entity.Index]->EntityData2;
+		CharObj2Base* co2 = MainCharObj2[chaowp->entity.Index];
+		ChaoLeash* leash = &CarriedChao[chaowp->entity.Index];
 
 		// If the player cannot be found, act as a normal Chao
 		if (player == nullptr)
@@ -237,20 +239,20 @@ void __cdecl Chao_Main_r(ObjectMaster* obj)
 		LevelChao_UpdateStuff(&leash->custom);
 
 		// Run custom actions
-		if (!(data1->entity.Status & StatusChao_FlyPlayer))
+		if (!(chaowp->entity.Status & StatusChao_FlyPlayer))
 		{
-			data1->entity.Status |= 0x40;
-			LevelChao_Normal(obj, data1, leash);
+			chaowp->entity.Status |= 0x40;
+			LevelChao_Normal(obj, chaowp, leash);
 		}
 		else
 		{
-			data1->entity.Status &= ~0x40;
-			LevelChao_Fly(obj, data1, leash, player, co2);
+			chaowp->entity.Status &= ~0x40;
+			LevelChao_Fly(obj, chaowp, leash, player, co2);
 		}
 
-		++data1->gap_30;
+		++chaowp->Timer;
 
-		if ((data1->Flags & 8) != 0)
+		if ((chaowp->ChaoFlag & 8) != 0)
 		{
 			AddToCollisionList(obj);
 		}

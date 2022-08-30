@@ -1,8 +1,5 @@
 #pragma once
 
-#define TARGET_DYNAMIC(name) ((decltype(name##_r)*)name##_t->Target())
-#define TARGET_STATIC(name) ((decltype(name##_r)*)name##_t.Target())
-
 enum CustomChaoActs {
 	ChaoAct_FollowPlayer,
 	ChaoAct_IdlePlayer,
@@ -34,6 +31,61 @@ enum ChaoStats {
 	ChaoStat_Unknown
 };
 
+enum : __int32
+{
+	EM_MD_PLEASURE = 0,
+	EM_MD_ANGER,
+	EM_MD_SORROW,
+	EM_MD_FEAR,
+	EM_MD_SURPRISE,
+	EM_MD_PAIN,
+	EM_MD_RELAX,
+	EM_MD_TOTAL,
+};
+
+enum : __int32
+{
+	EM_ST_SLEEPY,
+	EM_ST_SLEEP_DEPTH,
+	EM_ST_HUNGER,
+	EM_ST_BREED,
+	EM_ST_TEDIOUS,
+	EM_ST_LONELY,
+	EM_ST_TIRE,
+	EM_ST_STRESS,
+	EM_ST_NOURISHMENT,
+	EM_ST_CONDITION,
+	EM_ST_THIRSTY
+};
+
+enum : __int32
+{
+	EM_PER_CURIOSITY,
+	EM_PER_KINDNESS,
+	EM_PER_AGRESSIVE,
+	EM_PER_SLEEPY_HEAD,
+	EM_PER_SOLITUDE,
+	EM_PER_VITALITY,
+	EM_PER_GLUTTON,
+	EM_PER_REGAIN,
+	EM_PER_SKILLFUL,
+	EM_PER_CHARM,
+	EM_PER_CHATTY,
+	EM_PER_CALM,
+	EM_PER_FICKLE
+};
+
+// This one is not from symbols, can't find any enum
+enum : __int32
+{
+	EM_ILL_COUGH,
+	EM_ILL_COLD,
+	EM_ILL_RASH,
+	EM_ILL_NOSE,
+	EM_ILL_HICCUPS,
+	EM_ILL_STOMACH
+};
+
 struct CustomData {
 	NJS_POINT3 pre;
 	EntityData1* target;
@@ -56,9 +108,9 @@ extern bool ChaoAssist;
 extern bool ChaoLuck;
 extern ChaoLeash CarriedChao[8];
 
-DataPointer(ObjectMaster*, ALWControlTask, 0x1A0F94C);
-VoidFunc(LoadALWControl, 0x530B80);
-VoidFunc(InitWaypoints, 0x534EF0);
+DataPointer(ObjectMaster*, WorldMasterTask, 0x1A0F94C);
+VoidFunc(ALW_Create, 0x530B80);
+VoidFunc(AL_InitLandMark, 0x534EF0);
 VoidFunc(LoadChaoPalette, 0x534350);
 
 DataPointer(uint16_t, TargetEntitiesP1_Count, 0x1DE46B8);
@@ -75,106 +127,109 @@ FunctionPointer(void, CreateItemBoxSmoke, (NJS_POINT3* pos, NJS_POINT3* spd, Flo
 FunctionPointer(void, GetActiveCollisions, (float x, float y, float z, float s), 0x47CD60);
 DataPointer(uint16_t, ActiveColCount, 0x1DE9484);
 
-//void __usercall Chao_RunMovements(ObjectMaster* obj@<eax>)
-static const void* const Chao_RunMovementsPtr = (void*)0x0053DC40;
-static inline void Chao_RunMovements(ObjectMaster* obj)
+FunctionPointer(int, ALBHV_Swim, (ObjectMaster* obj), 0x562330);
+
+static const void* const AL_BehaviorControlPtr = (void*)0x0053DC40;
+static inline void AL_BehaviorControl(ObjectMaster* obj)
 {
 	__asm
 	{
 		mov eax, obj
-		call Chao_RunMovementsPtr
+		call AL_BehaviorControlPtr
 	}
 }
 
-//void __usercall Chao_PlayAnimation(MotionTableData* mtable@<esi>)
-static const void* const Chao_PlayAnimationPtr = (void*)0x007938D0;
-static inline void Chao_PlayAnimation_(MotionTableData* mtable)
+static const void* const MotionControlPtr = (void*)0x007938D0;
+static inline void MotionControl(MotionTableData* mtable)
 {
 	__asm
 	{
 		mov esi, mtable
-		call Chao_PlayAnimationPtr
+		call MotionControlPtr
 	}
 }
 
-static void Chao_PlayAnimation(ObjectMaster* obj) {
-	if (obj->Data1.Chao->Flags & 4) {
-		Chao_PlayAnimation_(&obj->Data1.Chao->MotionTable);
+static void AL_MotionControl(ObjectMaster* obj)
+{
+	if (((CHAOWK*)obj->Data1.Chao)->ChaoFlag & 4)
+	{
+		MotionControl(&obj->Data1.Chao->MotionTable);
 	}
 }
 
-//void __usercall Chao_RunEmotionBall(ObjectMaster *obj@<eax>)
-static const void* const Chao_RunEmotionBallPtr = (void*)0x0053CB70;
-static inline void Chao_RunEmotionBall(ObjectMaster* obj)
+static const void* const AL_IconControlPtr = (void*)0x0053CB70;
+static inline void AL_IconControl(ObjectMaster* obj)
 {
 	__asm
 	{
 		mov eax, obj
-		call Chao_RunEmotionBallPtr
+		call AL_IconControlPtr
 	}
 }
 
-//void __usercall Chao_RunActions(ObjectMaster *obj@<eax>)
-static const void* const Chao_RunActionsPtr = (void*)0x0053A3E0;
-static inline void Chao_RunActions(ObjectMaster* obj)
+static const void* const AL_FaceControlPtr = (void*)0x0053A3E0;
+static inline void AL_FaceControl(ObjectMaster* obj)
 {
 	__asm
 	{
 		mov eax, obj
-		call Chao_RunActionsPtr
+		call AL_FaceControlPtr
 	}
 }
 
-//void __usercall Chao_MoveEmotionBall(ObjectMaster* a1@<ebx>)
-static const void* const Chao_MoveEmotionBallPtr = (void*)0x0056CCF0;
-static inline void Chao_MoveEmotionBall(ObjectMaster* obj)
+static const void* const AL_ShapeControlPtr = (void*)0x0056CCF0;
+static inline void AL_ShapeControl(ObjectMaster* obj)
 {
 	__asm
 	{
 		mov ebx, obj
-		call Chao_MoveEmotionBallPtr
+		call AL_ShapeControlPtr
 	}
 }
 
-//void __usercall Chao_RunGravity(ObjectMaster *obj@<eax>)
-static const void* const Chao_RunGravityPtr = (void*)0x00796780;
-static inline void Chao_RunGravity(ObjectMaster* obj)
+static const void* const MOV_ControlPtr = (void*)0x00796780;
+static inline void MOV_Control(ObjectMaster* obj)
 {
 	__asm
 	{
 		mov eax, obj
-		call Chao_RunGravityPtr
+		call MOV_ControlPtr
 	}
 }
 
-//void __usercall Chao_RunPhysics(ObjectMaster *obj@<eax>)
-static const void* const Chao_RunPhysicsPtr = (void*)0x0053DF00;
-static inline void Chao_RunPhysics(ObjectMaster* obj)
+static void AL_MOV_Control(ObjectMaster* obj)
+{
+	if (((CHAOWK*)obj->Data1.Chao)->ChaoFlag & 2)
+	{
+		MOV_Control(obj);
+	}
+}
+
+static const void* const AL_DetectCollisionPtr = (void*)0x0053DF00;
+static inline void AL_DetectCollision(ObjectMaster* obj)
 {
 	__asm
 	{
 		mov eax, obj
-		call Chao_RunPhysicsPtr
+		call AL_DetectCollisionPtr
 	}
 }
 
-//void __usercall RunChaoBehaviour@<eax>(ObjectMaster* obj@<eax>, void* func, int idk)
-static const void* const RunChaoBehaviourPtr = (void*)0x53D890;
-static inline void RunChaoBehaviour(ObjectMaster* obj, void* func, int idk)
+static const void* const AL_SetBehaviorWithTimerPtr = (void*)0x53D890;
+static inline void AL_SetBehaviorWithTimer(ObjectMaster* obj, int(__cdecl* Func)(ObjectMaster*), int ReserveTimer)
 {
 	__asm
 	{
-		push[idk]
-		push[func]
+		push[ReserveTimer]
+		push[Func]
 		mov eax, [obj]
-		call RunChaoBehaviourPtr
+		call AL_SetBehaviorWithTimerPtr
 		add esp, 8
 	}
 }
 
-//char __usercall SE_CallV2@<al>(int id@<edi>, NJS_VECTOR* position@<esi>, ObjectMaster* entity, char bank, char volume)
-static const void* const SE_CallV2Ptr = (void*)0x4372E0;
-static inline void SE_CallV2(int id, NJS_VECTOR* position, ObjectMaster* entity, char bank, char volume)
+static const void* const dsPlay_iloopPtr = (void*)0x4372E0;
+static inline void dsPlay_iloop(int id, NJS_VECTOR* position, ObjectMaster* entity, char bank, char volume)
 {
 	__asm
 	{
@@ -185,19 +240,35 @@ static inline void SE_CallV2(int id, NJS_VECTOR* position, ObjectMaster* entity,
 		push[entity]
 		mov esi, [position]
 		mov edi, [id]
-		call SE_CallV2Ptr
+		call dsPlay_iloopPtr
 		add esp, 12
 	}
 }
 
-static const void* const sub_53CAC0Ptr = (void*)0x53CAC0;
-static inline void sub_53CAC0(ObjectMaster* a1)
+static const void* const AL_IconResetPosPtr = (void*)0x53CAC0;
+static inline void AL_IconResetPos(ObjectMaster* obj)
 {
 	__asm
 	{
-		mov eax, [a1]
-		call sub_53CAC0Ptr
+		mov eax, [obj]
+		call AL_IconResetPosPtr
 	}
+}
+
+static const void* const SetMotionLinkPtr = (void*)0x00793C40;
+static inline void SetMotionLink(MOTION_CTRL* Control, int Mtnnum)
+{
+	__asm
+	{
+		mov eax, Control
+		mov edx, Mtnnum
+		call SetMotionLinkPtr
+	}
+}
+
+static void AL_SetMotionLink(ObjectMaster* obj, int Mtnnum)
+{
+	SetMotionLink(&((CHAOWK*)obj->Data1.Chao)->MotionCtrl, Mtnnum);
 }
 
 static const void* const AdjustAnglePtr = (void*)0x446960;

@@ -14,7 +14,7 @@ FunctionHook<BYTE*, int> ChangeChaoStage_hook(0x52B5B0);
 FunctionHook<void, ObjectMaster*> ItemBoxAirExec_hook(0x6C8EF0);
 UsercallFuncVoid(ItemBoxCollision_hook, (ObjectMaster* obj), (obj), 0x6C8090, rEDI);
 UsercallFunc(BOOL, EnemyCheckDamage_hook, (EntityData1* data, EnemyData* edata), (data, edata), 0x47AA70, rEAX, rEAX, stack4);
-UsercallFunc(BOOL, GetWayPointPos_hook, (void* buf, NJS_POINT3* pos, int num), (buf, pos, num), 0x534F80, rEAX, rEAX, rEDI, stack4);
+UsercallFunc(BOOL, AL_GetRandomAttrPos_hook, (void* buf, NJS_POINT3* pos, int num), (buf, pos, num), 0x534F80, rEAX, rEAX, rEDI, stack4);
 
 static bool ChaoPowerups = false;
 bool ChaoAssist = false;
@@ -62,18 +62,18 @@ static void SetChaoPowerups(int id, ChaoData* chaodata)
 
 static void LoadChaoLevel(int id)
 {
-	if (!ALWControlTask)
+	if (!WorldMasterTask)
 	{
-		LoadALWControl();
+		ALW_Create();
 	}
 
-	// Fake waypoints so that GetWayPointPos runs
+	// Fake waypoints so that AL_GetRandomAttrPos runs
 	if (!*(int*)0x1A1693C) *(int*)0x1A1693C = 1;
 	if (!*(int*)0x1A1D958) *(int*)0x1A1D958 = 1;
 	if (!*(int*)0x1A1E95C) *(int*)0x1A1E95C = 1;
 
 	auto player = MainCharObj1[id];
-	NJS_VECTOR pos = { 0.0f, 0.0f, 0.0f };
+	NJS_POINT3 pos = { 0.0f, 0.0f, 0.0f };
 
 	if (player && CarriedChao[id].mode == ChaoLeashMode_Free)
 	{
@@ -298,11 +298,11 @@ void ItemBoxAirExec_r(ObjectMaster* obj)
 	ItemBoxAirExec_hook.Original(obj);
 }
 
-BOOL __cdecl GetWayPointPos_r(void* buf, NJS_POINT3* pos, int num)
+BOOL __cdecl AL_GetRandomAttrPos_r(void* buf, NJS_POINT3* pos, int num)
 {
 	if (CurrentLevel == LevelIDs_ChaoWorld || CurrentChaoData == nullptr)
 	{
-		return GetWayPointPos_hook.Original(buf, pos, num);
+		return AL_GetRandomAttrPos_hook.Original(buf, pos, num);
 	}
 	else
 	{
@@ -332,7 +332,7 @@ extern "C"
 		EnemyCheckDamage_hook.Hook(EnemyCheckDamage_r);
 		ItemBoxCollision_hook.Hook(ItemBoxCollision_r);
 		ItemBoxAirExec_hook.Hook(ItemBoxAirExec_r);
-		GetWayPointPos_hook.Hook(GetWayPointPos_r);
+		AL_GetRandomAttrPos_hook.Hook(AL_GetRandomAttrPos_r);
 
 		Chao_Init();
 		PatchWaterDetection();

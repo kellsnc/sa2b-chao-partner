@@ -1,5 +1,5 @@
 #pragma once
 
-extern ChaoData1* CurrentChaoData;
+extern CHAOWK* CurrentChaoData;
 
 void Chao_Init();
