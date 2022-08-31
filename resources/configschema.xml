@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<ConfigSchema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://www.sonicretro.org">
+  <Groups>
+    <Group name="Functionalities">
+      <Property name="EnablePowerups" type="bool" defaultvalue="False" display="Enable Powerups">
+        <HelpText>The stats of your chao partner will improve yours with this enabled.</HelpText>
+      </Property>
+      <Property name="EnableChaoAssist" type="bool" defaultvalue="False" display="Enable Chao Assist">
+        <HelpText>The Chao can attack enemies and collect things with this enabled.</HelpText>
+      </Property>
+    </Group>
+  </Groups>
+</ConfigSchema>

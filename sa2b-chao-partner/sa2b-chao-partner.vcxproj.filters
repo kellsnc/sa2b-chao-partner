@@ -54,4 +54,9 @@
       <Filter>Fichiers sources</Filter>
     </ClCompile>
   </ItemGroup>
+  <ItemGroup>
+    <Xml Include="..\resources\configschema.xml">
+      <Filter>Fichiers de ressources</Filter>
+    </Xml>
+  </ItemGroup>
 </Project>
