@@ -24,7 +24,7 @@ static float Chao_GetFlightSpeed(CHAOWK* chaowp)
 
 static float Chao_GetAttackRange(CHAOWK* chaowp)
 {
-	return max(0, max(200.0f, min(500.0f, chaowp->pParamGC->Lev[ChaoStat_Stamina] * 7)) - (chaowp->pParamGC->emotion.State[EM_ST_SLEEP_DEPTH] / 2));
+	return max(0, max(200.0f, min(500.0f, (float)chaowp->pParamGC->Lev[ChaoStat_Stamina] * 7.0f)) - (float)(chaowp->pParamGC->emotion.State[EM_ST_SLEEP_DEPTH] / 2));
 }
 
 static bool Chao_AttackCondition(CHAOWK* chaowp, CustomData* custom, int playerid)
